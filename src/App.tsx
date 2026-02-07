@@ -4,6 +4,7 @@ import { ViewerHUD } from './ui/ViewerHUD'
 import { ViewerControls } from './ui/ViewerControls'
 import { GaussianViewer } from './viewer/gaussianViewer'
 import { KeyframePanel } from './ui/KeyframePanel'
+import { PathPlayer } from './path/player/PathPlayer'
 import {
   resetViewerError,
   setViewerProgress,
@@ -25,6 +26,11 @@ import {
   moveKeyframe,
   setPreviewError,
   setPreviewing,
+  setPaused,
+  setCurrentTime,
+  setDuration,
+  setLoop,
+  clearPreviewError,
   setSelected,
   usePathStore,
 } from './path/pathStore'
@@ -35,7 +41,14 @@ function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
   const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity } =
     useViewerStore((state) => state)
-  const { keyframes, selectedId, isPreviewing, previewError } = usePathStore((state) => state)
+  const { keyframes, selectedId, isPreviewing, isPaused, currentTime, duration, loop, previewError } =
+    usePathStore((state) => state)
+  const playerRef = useMemo(() => new PathPlayer(viewer), [viewer])
+
+  useEffect(() => {
+    playerRef.setKeyframes(keyframes)
+    setDuration(playerRef.getDuration())
+  }, [keyframes, playerRef])
 
   useEffect(() => {
     const tracker = createFpsTracker((value) => setViewerFps(value))
@@ -98,20 +111,52 @@ function App() {
       setPreviewError('Add at least 2 keyframes to preview.')
       return
     }
-    console.info('[PathPreview] start', { count: keyframes.length })
-    setPreviewing(true)
-    const first = keyframes[0]
-    if (first) {
-      viewer.setCameraPose(first.pose)
-      setSelected(first.id)
+    clearPreviewError()
+    const started = playerRef.play()
+    if (!started) {
+      setPreviewError('Unable to start preview.')
+      return
     }
-    // TODO(step-4): play path with spline/slerp + easing at 30 FPS.
+    setPreviewing(true)
+    setPaused(false)
+  }
+
+  const handlePreviewPause = () => {
+    playerRef.pause()
+    setPaused(true)
+    setPreviewing(false)
   }
 
   const handlePreviewStop = () => {
-    console.info('[PathPreview] stop')
+    playerRef.stop()
+    setPreviewing(false)
+    setPaused(false)
+  }
+
+  const handleToggleLoop = () => {
+    const next = !loop
+    playerRef.setLoop(next)
+    setLoop(next)
+  }
+
+  const handleSeek = (value: number) => {
+    playerRef.pause()
+    playerRef.seek(value)
+    setCurrentTime(value)
+    setPaused(true)
     setPreviewing(false)
   }
+
+  useEffect(() => {
+    if (!isPreviewing) return
+    let raf = 0
+    const tick = () => {
+      setCurrentTime(playerRef.getCurrentTime())
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [isPreviewing, playerRef])
 
   return (
     <div className="app-shell">
@@ -121,13 +166,20 @@ function App() {
         keyframes={keyframes}
         selectedId={selectedId}
         isPreviewing={isPreviewing}
+        isPaused={isPaused}
+        currentTime={currentTime}
+        duration={duration}
+        loop={loop}
         previewError={previewError}
         onAddKeyframe={handleAddKeyframe}
         onDeleteKeyframe={deleteKeyframe}
         onMoveKeyframe={moveKeyframe}
         onSelectKeyframe={setSelected}
         onPreviewPlay={handlePreviewPlay}
+        onPreviewPause={handlePreviewPause}
         onPreviewStop={handlePreviewStop}
+        onToggleLoop={handleToggleLoop}
+        onSeek={handleSeek}
         controlMode={controlMode}
         currentPose={viewer.getCameraPose()}
       />

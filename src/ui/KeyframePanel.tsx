@@ -1,17 +1,25 @@
 import type { CameraPose, Keyframe } from '../path/types'
 import type { ControlMode } from '../state/types'
+import { PlaybackControls } from './PlaybackControls'
 
 interface KeyframePanelProps {
   keyframes: Keyframe[]
   selectedId: string | null
   isPreviewing: boolean
+  isPaused: boolean
+  currentTime: number
+  duration: number
+  loop: boolean
   previewError?: string
   onAddKeyframe: () => void
   onDeleteKeyframe: (id: string) => void
   onMoveKeyframe: (id: string, dir: -1 | 1) => void
   onSelectKeyframe: (id: string) => void
   onPreviewPlay: () => void
+  onPreviewPause: () => void
   onPreviewStop: () => void
+  onToggleLoop: () => void
+  onSeek: (value: number) => void
   controlMode: ControlMode
   currentPose?: CameraPose | null
 }
@@ -26,13 +34,20 @@ export function KeyframePanel({
   keyframes,
   selectedId,
   isPreviewing,
+  isPaused,
+  currentTime,
+  duration,
+  loop,
   previewError,
   onAddKeyframe,
   onDeleteKeyframe,
   onMoveKeyframe,
   onSelectKeyframe,
   onPreviewPlay,
+  onPreviewPause,
   onPreviewStop,
+  onToggleLoop,
+  onSeek,
   controlMode,
   currentPose,
 }: KeyframePanelProps) {
@@ -109,9 +124,18 @@ export function KeyframePanel({
       )}
 
       <div className="panel-footer">
-        <button className="control-button primary" onClick={isPreviewing ? onPreviewStop : onPreviewPlay}>
-          {isPreviewing ? 'Stop Preview' : 'Preview Play'}
-        </button>
+        <PlaybackControls
+          isPlaying={isPreviewing}
+          isPaused={isPaused}
+          loop={loop}
+          currentTime={currentTime}
+          duration={duration}
+          onPlay={onPreviewPlay}
+          onPause={onPreviewPause}
+          onStop={onPreviewStop}
+          onToggleLoop={onToggleLoop}
+          onSeek={onSeek}
+        />
         {previewError ? <div className="panel-error">{previewError}</div> : null}
       </div>
     </div>

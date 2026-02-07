@@ -122,3 +122,7 @@ export const setPreviewError = (message: string) => {
 export const clearPreviewError = () => {
   setState({ previewError: undefined })
 }
+
+export const clearPreviewError = () => {
+  setState({ previewError: undefined })
+}
