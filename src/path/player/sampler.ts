@@ -1,0 +1,53 @@
+import type { CameraPose, Keyframe } from '../types'
+import { easeInOutCubic } from '../math/easing'
+import { catmullRom, lerpVec3 } from '../math/catmullRom'
+import { slerpQuat } from '../math/quat'
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+export const samplePoseAtTime = (keyframes: Keyframe[], tGlobal: number): CameraPose | null => {
+  if (keyframes.length === 0) return null
+  if (keyframes.length === 1) return keyframes[0].pose
+
+  const sorted = keyframes
+  const startT = sorted[0].t
+  const endT = sorted[sorted.length - 1].t
+  if (endT <= startT) return sorted[0].pose
+
+  const clampedT = Math.max(startT, Math.min(endT, tGlobal))
+
+  let segmentIndex = 0
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    if (clampedT >= sorted[i].t && clampedT <= sorted[i + 1].t) {
+      segmentIndex = i
+      break
+    }
+  }
+
+  const k1 = sorted[segmentIndex]
+  const k2 = sorted[segmentIndex + 1]
+  const denom = k2.t - k1.t
+  const u = denom > 0 ? (clampedT - k1.t) / denom : 0
+  const eased = easeInOutCubic(u)
+
+  const p1 = k1.pose.position
+  const p2 = k2.pose.position
+
+  let position: CameraPose['position']
+  if (sorted.length < 3) {
+    position = lerpVec3(p1, p2, eased)
+  } else {
+    const p0 = sorted[Math.max(0, segmentIndex - 1)].pose.position
+    const p3 = sorted[Math.min(sorted.length - 1, segmentIndex + 2)].pose.position
+    position = catmullRom(p0, p1, p2, p3, eased)
+  }
+
+  const rotation = slerpQuat(k1.pose.quaternion, k2.pose.quaternion, eased)
+  const fov = lerp(k1.pose.fov, k2.pose.fov, eased)
+
+  return {
+    position,
+    quaternion: rotation,
+    fov,
+  }
+}
