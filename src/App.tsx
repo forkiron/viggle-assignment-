@@ -98,11 +98,18 @@ function App() {
       setPreviewError('Add at least 2 keyframes to preview.')
       return
     }
+    console.info('[PathPreview] start', { count: keyframes.length })
     setPreviewing(true)
+    const first = keyframes[0]
+    if (first) {
+      viewer.setCameraPose(first.pose)
+      setSelected(first.id)
+    }
     // TODO(step-4): play path with spline/slerp + easing at 30 FPS.
   }
 
   const handlePreviewStop = () => {
+    console.info('[PathPreview] stop')
     setPreviewing(false)
   }
 

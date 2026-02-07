@@ -52,6 +52,7 @@ export const addKeyframe = (pose: CameraPose) => {
     pose,
     t: state.keyframes.length * 2,
   }
+  console.info('[PathStore] addKeyframe', { id: next.id, t: next.t })
   setState({
     keyframes: [...state.keyframes, next],
     selectedId: next.id,
@@ -60,6 +61,7 @@ export const addKeyframe = (pose: CameraPose) => {
 }
 
 export const deleteKeyframe = (id: string) => {
+  console.info('[PathStore] deleteKeyframe', { id })
   const keyframes = state.keyframes.filter((frame) => frame.id !== id)
   const selectedId = state.selectedId === id ? keyframes[0]?.id ?? null : state.selectedId
   setState({ keyframes, selectedId })
@@ -71,6 +73,7 @@ export const moveKeyframe = (id: string, dir: -1 | 1) => {
   const nextIndex = index + dir
   if (nextIndex < 0 || nextIndex >= state.keyframes.length) return
 
+  console.info('[PathStore] moveKeyframe', { id, dir })
   const keyframes = [...state.keyframes]
   const [removed] = keyframes.splice(index, 1)
   keyframes.splice(nextIndex, 0, removed)
@@ -78,14 +81,17 @@ export const moveKeyframe = (id: string, dir: -1 | 1) => {
 }
 
 export const setSelected = (id: string | null) => {
+  console.info('[PathStore] setSelected', { id })
   setState({ selectedId: id })
 }
 
 export const setPreviewing = (value: boolean) => {
+  console.info('[PathStore] setPreviewing', { value })
   setState({ isPreviewing: value, previewError: undefined })
 }
 
 export const setPreviewError = (message: string) => {
+  console.info('[PathStore] setPreviewError', { message })
   setState({ previewError: message })
 }
 
