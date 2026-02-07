@@ -7,6 +7,10 @@ type PathState = {
   keyframes: Keyframe[]
   selectedId: string | null
   isPreviewing: boolean
+  isPaused: boolean
+  currentTime: number
+  duration: number
+  loop: boolean
   previewError?: string
 }
 
@@ -14,6 +18,10 @@ const DEFAULT_STATE: PathState = {
   keyframes: [],
   selectedId: null,
   isPreviewing: false,
+  isPaused: false,
+  currentTime: 0,
+  duration: 0,
+  loop: false,
   previewError: undefined,
 }
 
@@ -87,7 +95,23 @@ export const setSelected = (id: string | null) => {
 
 export const setPreviewing = (value: boolean) => {
   console.info('[PathStore] setPreviewing', { value })
-  setState({ isPreviewing: value, previewError: undefined })
+  setState({ isPreviewing: value, previewError: undefined, isPaused: false })
+}
+
+export const setPaused = (value: boolean) => {
+  setState({ isPaused: value })
+}
+
+export const setCurrentTime = (value: number) => {
+  setState({ currentTime: value })
+}
+
+export const setDuration = (value: number) => {
+  setState({ duration: value })
+}
+
+export const setLoop = (value: boolean) => {
+  setState({ loop: value })
 }
 
 export const setPreviewError = (message: string) => {
