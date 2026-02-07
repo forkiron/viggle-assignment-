@@ -29,6 +29,7 @@ export class GaussianViewer {
   private orbitControls?: OrbitControlWrapper
   private flyControls?: FlyControls
   private controlMode: ControlMode = 'orbit'
+  private controlsEnabled = true
   private moveSpeed = 4
   private lookSensitivity = 0.002
   private initialOrbitTarget?: Vector3
@@ -212,6 +213,7 @@ export class GaussianViewer {
 
   setControlMode(mode: ControlMode) {
     this.controlMode = mode
+    if (!this.controlsEnabled) return
     if (mode === 'orbit') {
       this.input?.setPointerLockEnabled(false)
       this.flyControls?.disable()
@@ -234,6 +236,17 @@ export class GaussianViewer {
     if (this.orbitControls) {
       const rotateSpeed = Math.max(0.1, Math.min(5, value * 500))
       this.orbitControls.setRotateSpeed(rotateSpeed)
+    }
+  }
+
+  setControlsEnabled(enabled: boolean) {
+    this.controlsEnabled = enabled
+    if (!enabled) {
+      this.input?.setPointerLockEnabled(false)
+      this.flyControls?.disable()
+      this.orbitControls?.disable()
+    } else {
+      this.setControlMode(this.controlMode)
     }
   }
 
