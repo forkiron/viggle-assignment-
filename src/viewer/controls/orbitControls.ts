@@ -6,8 +6,8 @@ export class OrbitControlWrapper {
 
   constructor(camera: Camera, renderer: WebGLRenderer) {
     this.controls = new OrbitControls(camera, renderer.domElement)
-    this.controls.enableDamping = true
-    this.controls.dampingFactor = 0.08
+    this.controls.enableDamping = false
+    this.controls.dampingFactor = 0
     this.controls.screenSpacePanning = true
   }
 
