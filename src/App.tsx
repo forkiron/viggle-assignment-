@@ -151,7 +151,14 @@ function App() {
     if (!isPreviewing) return
     let raf = 0
     const tick = () => {
+      const playing = playerRef.getIsPlaying()
       setCurrentTime(playerRef.getCurrentTime())
+      if (!playing) {
+        setPreviewing(false)
+        setPaused(false)
+        setCurrentTime(playerRef.getCurrentTime())
+        return
+      }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -190,6 +197,7 @@ function App() {
         controlMode={controlMode}
         moveSpeed={moveSpeed}
         lookSensitivity={lookSensitivity}
+        isPreviewing={isPreviewing}
         onSceneUrlChange={setViewerSceneUrl}
         onLoad={handleLoad}
         onFrameScene={() => viewer.frameScene()}

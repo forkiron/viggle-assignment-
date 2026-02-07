@@ -10,6 +10,7 @@ interface ViewerControlsProps {
   controlMode: ControlMode
   moveSpeed: number
   lookSensitivity: number
+  isPreviewing: boolean
   onSceneUrlChange: (next: string) => void
   onLoad: (url: string) => void
   onFrameScene: () => void
@@ -26,6 +27,7 @@ export function ViewerControls({
   controlMode,
   moveSpeed,
   lookSensitivity,
+  isPreviewing,
   onSceneUrlChange,
   onLoad,
   onFrameScene,
@@ -55,13 +57,14 @@ export function ViewerControls({
   }
 
   const handleModeToggle = () => {
+    if (isPreviewing) return
     onControlModeChange(controlMode === 'orbit' ? 'fly' : 'orbit')
   }
 
   return (
     <div className="viewer-controls">
       <label className="control-label">Navigation Mode</label>
-      <button className="control-button" onClick={handleModeToggle}>
+      <button className="control-button" onClick={handleModeToggle} disabled={isPreviewing}>
         {controlMode === 'orbit' ? 'Orbit Mode' : 'Walk/Fly Mode'}
       </button>
       {controlMode === 'fly' ? (
