@@ -3,6 +3,7 @@ import { SplatViewer } from './viewer/SplatViewer'
 import { ViewerHUD } from './ui/ViewerHUD'
 import { ViewerControls } from './ui/ViewerControls'
 import { GaussianViewer } from './viewer/gaussianViewer'
+import { KeyframePanel } from './ui/KeyframePanel'
 import {
   resetViewerError,
   setViewerProgress,
@@ -18,6 +19,15 @@ import {
 } from './state/viewerStore'
 import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
+import {
+  addKeyframe,
+  deleteKeyframe,
+  moveKeyframe,
+  setPreviewError,
+  setPreviewing,
+  setSelected,
+  usePathStore,
+} from './path/pathStore'
 
 const DEFAULT_SCENE_URL = ''
 
@@ -25,6 +35,7 @@ function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
   const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity } =
     useViewerStore((state) => state)
+  const { keyframes, selectedId, isPreviewing, previewError } = usePathStore((state) => state)
 
   useEffect(() => {
     const tracker = createFpsTracker((value) => setViewerFps(value))
@@ -73,10 +84,46 @@ function App() {
     }
   }
 
+  const handleAddKeyframe = () => {
+    const pose = viewer.getCameraPose()
+    if (!pose) {
+      setPreviewError('Camera pose unavailable.')
+      return
+    }
+    addKeyframe(pose)
+  }
+
+  const handlePreviewPlay = () => {
+    if (keyframes.length < 2) {
+      setPreviewError('Add at least 2 keyframes to preview.')
+      return
+    }
+    setPreviewing(true)
+    // TODO(step-4): play path with spline/slerp + easing at 30 FPS.
+  }
+
+  const handlePreviewStop = () => {
+    setPreviewing(false)
+  }
+
   return (
     <div className="app-shell">
       <SplatViewer viewer={viewer} />
       <ViewerHUD status={status} progress={progress} fps={fps} pointCount={pointCount} error={error} />
+      <KeyframePanel
+        keyframes={keyframes}
+        selectedId={selectedId}
+        isPreviewing={isPreviewing}
+        previewError={previewError}
+        onAddKeyframe={handleAddKeyframe}
+        onDeleteKeyframe={deleteKeyframe}
+        onMoveKeyframe={moveKeyframe}
+        onSelectKeyframe={setSelected}
+        onPreviewPlay={handlePreviewPlay}
+        onPreviewStop={handlePreviewStop}
+        controlMode={controlMode}
+        currentPose={viewer.getCameraPose()}
+      />
       <ViewerControls
         presets={scenePresets}
         sceneUrl={sceneUrl || DEFAULT_SCENE_URL}

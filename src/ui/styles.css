@@ -167,6 +167,102 @@ body,
   gap: 10px;
 }
 
+.keyframe-panel {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: min(360px, 92vw);
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+  z-index: 2;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.panel-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel-empty {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.keyframe-list {
+  display: grid;
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.keyframe-row {
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.keyframe-row.selected {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.4);
+}
+
+.keyframe-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.keyframe-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.keyframe-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.control-button.danger {
+  border-color: rgba(248, 113, 113, 0.6);
+  color: #fecaca;
+}
+
+.panel-footer {
+  display: grid;
+  gap: 8px;
+}
+
+.panel-error {
+  font-size: 12px;
+  color: var(--danger);
+}
+
 @media (max-width: 720px) {
   .viewer-controls {
     left: 20px;
