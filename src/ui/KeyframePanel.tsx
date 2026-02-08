@@ -12,6 +12,7 @@ interface KeyframePanelProps {
   loop: boolean
   previewError?: string
   onAddKeyframe: () => void
+  onPreset: (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => void
   onDeleteKeyframe: (id: string) => void
   onMoveKeyframe: (id: string, dir: -1 | 1) => void
   onSelectKeyframe: (id: string) => void
@@ -40,6 +41,7 @@ export function KeyframePanel({
   loop,
   previewError,
   onAddKeyframe,
+  onPreset,
   onDeleteKeyframe,
   onMoveKeyframe,
   onSelectKeyframe,
@@ -60,6 +62,21 @@ export function KeyframePanel({
         </div>
         <button className="control-button" onClick={onAddKeyframe}>
           Add Keyframe
+        </button>
+      </div>
+
+      <div className="panel-presets">
+        <button className="control-button" onClick={() => onPreset('turntable')}>
+          Turntable
+        </button>
+        <button className="control-button" onClick={() => onPreset('dolly-in')}>
+          Dolly-In
+        </button>
+        <button className="control-button" onClick={() => onPreset('crane-up')}>
+          Crane-Up
+        </button>
+        <button className="control-button" onClick={() => onPreset('figure-8')}>
+          Figure-8
         </button>
       </div>
 

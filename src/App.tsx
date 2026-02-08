@@ -22,6 +22,8 @@ import {
 import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
 import { samplePoseAtTime } from './path/player/sampler'
+import { generateCraneUp, generateDollyIn, generateFigure8, generateTurntable } from './path/presets'
+import { Vector3 } from 'three'
 import {
   addKeyframe,
   deleteKeyframe,
@@ -34,6 +36,7 @@ import {
   setLoop,
   clearPreviewError,
   setSelected,
+  setKeyframes,
   usePathStore,
 } from './path/pathStore'
 
@@ -113,6 +116,41 @@ function App() {
       return
     }
     addKeyframe(pose)
+  }
+
+  const handlePreset = (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => {
+    const cameraPose = viewer.getCameraPose()
+    if (!cameraPose) {
+      setPreviewError('Camera pose unavailable.')
+      return
+    }
+
+    const target = viewer.getOrbitTarget() ?? new Vector3(0, 0, 0)
+    const camPos = new Vector3(cameraPose.position[0], cameraPose.position[1], cameraPose.position[2])
+    const radius = Math.max(1, camPos.distanceTo(target))
+    const height = camPos.y - target.y
+    const options = { target, radius, height, fov: cameraPose.fov, duration: 8 }
+
+    let frames
+    switch (preset) {
+      case 'turntable':
+        frames = generateTurntable(options)
+        break
+      case 'dolly-in':
+        frames = generateDollyIn(options)
+        break
+      case 'crane-up':
+        frames = generateCraneUp(options)
+        break
+      case 'figure-8':
+        frames = generateFigure8(options)
+        break
+      default:
+        return
+    }
+
+    setKeyframes(frames)
+    clearPreviewError()
   }
 
   const handlePreviewPlay = () => {
@@ -279,6 +317,7 @@ function App() {
         loop={loop}
         previewError={previewError}
         onAddKeyframe={handleAddKeyframe}
+        onPreset={handlePreset}
         onDeleteKeyframe={deleteKeyframe}
         onMoveKeyframe={moveKeyframe}
         onSelectKeyframe={setSelected}
