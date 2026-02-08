@@ -1,3 +1,7 @@
+/**
+ * External store for viewer UI state: status, progress, fps, point count,
+ * scene URL, control mode, move speed, look sensitivity, frustum visibility, error.
+ */
 import { useSyncExternalStore } from 'react'
 import type { ViewerState, ViewerStatus } from './types'
 

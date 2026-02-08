@@ -1,3 +1,4 @@
+/** One-click camera path presets: turntable, dolly-in, crane-up, figure-8. */
 import type { CameraPose, Keyframe } from './types'
 import { Object3D, Vector3 } from 'three'
 

@@ -1,3 +1,4 @@
+/** FPS counter over 1s windows for the HUD. */
 export interface FpsTracker {
   start: () => void
   stop: () => void

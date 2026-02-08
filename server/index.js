@@ -1,3 +1,7 @@
+/**
+ * Export server: receives path + render settings, accepts frame uploads (PNG),
+ * runs FFmpeg to produce output.mp4. Serves static exports at /exports/<id>/output.mp4.
+ */
 import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
@@ -27,6 +31,7 @@ app.use(express.json({ limit: '2mb' }))
 
 const upload = multer({ storage: multer.memoryStorage() })
 
+/** Active exports: id -> { status, framesDir, dir, totalFrames, receivedFrames, ffmpegProcess }. */
 const exportsMap = new Map()
 
 const ensureExportDir = (id) => {
@@ -54,6 +59,7 @@ app.post('/export/start', (req, res) => {
   res.json({ id })
 })
 
+/** Upload a single rendered frame (PNG). */
 app.post('/export/:id/frame', upload.single('frame'), (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)
@@ -68,6 +74,7 @@ app.post('/export/:id/frame', upload.single('frame'), (req, res) => {
   res.json({ ok: true })
 })
 
+/** Start FFmpeg encoding: frames -> output.mp4 (30 fps, libx264, yuv420p). */
 app.post('/export/:id/finish', (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)
@@ -109,6 +116,7 @@ app.post('/export/:id/finish', (req, res) => {
   res.json({ ok: true, output: `/exports/${id}/output.mp4` })
 })
 
+/** Cancel export and remove export directory. */
 app.post('/export/:id/cancel', (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)

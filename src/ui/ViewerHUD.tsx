@@ -1,3 +1,4 @@
+/** HUD: status, loading progress %, FPS, point count, error. */
 import type { ViewerStatus } from '../state/types'
 
 interface ViewerHUDProps {

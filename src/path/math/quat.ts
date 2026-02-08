@@ -1,3 +1,4 @@
+/** Quaternion SLERP for smooth rotation interpolation between keyframes. */
 export type Quat = [number, number, number, number]
 
 const dot = (a: Quat, b: Quat) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]

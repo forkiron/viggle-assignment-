@@ -5,6 +5,10 @@ import { slerpQuat } from '../math/quat'
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
+/**
+ * Interpolates camera pose at global time t: position via Catmull-Rom (or linear if <3 keyframes),
+ * rotation via SLERP, FOV via linear; segment time is eased with easeInOutCubic.
+ */
 export const samplePoseAtTime = (keyframes: Keyframe[], tGlobal: number): CameraPose | null => {
   if (keyframes.length === 0) return null
   if (keyframes.length === 1) return keyframes[0].pose

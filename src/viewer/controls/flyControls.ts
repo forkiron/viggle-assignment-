@@ -1,3 +1,4 @@
+/** WASD + mouse look (pointer lock) fly camera. */
 import { Euler, Quaternion, Vector3 } from 'three'
 import type { Camera } from 'three'
 import { InputManager } from './input'

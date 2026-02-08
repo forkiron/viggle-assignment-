@@ -1,3 +1,4 @@
+/** Serialize/deserialize path keyframes (e.g. for path.json). */
 import type { Keyframe } from './types'
 
 export const exportPath = (keyframes: Keyframe[]) => {

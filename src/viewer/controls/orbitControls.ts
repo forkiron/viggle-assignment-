@@ -1,3 +1,4 @@
+/** Thin wrapper around Three.js OrbitControls for orbit/pan/zoom. */
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { Camera, Vector3, WebGLRenderer } from 'three'
 

@@ -1,3 +1,4 @@
+/** Right panel: navigation mode (orbit/fly), move speed, look sensitivity, scene preset/URL, Load, Frame Scene, Reset View. */
 import { useMemo, useState } from 'react'
 import type { ViewerStatus } from '../state/types'
 import type { SceneSource } from '../viewer/sceneSources'

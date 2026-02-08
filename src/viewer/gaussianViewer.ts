@@ -1,3 +1,7 @@
+/**
+ * Wraps GaussianSplats3D Viewer: init, load .ply, frame/reset view, orbit/fly controls,
+ * camera pose get/set, and renderToBlob for export.
+ */
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d'
 import { CameraHelper, Vector3 } from 'three'
 import type { Camera, WebGLRenderer } from 'three'
@@ -193,7 +197,6 @@ export class GaussianViewer {
       return scene.getPointCount()
     }
 
-    // TODO(step-1): wire point count once GaussianSplats3D exposes it.
     return null
   }
 
@@ -213,9 +216,6 @@ export class GaussianViewer {
     this.viewer = null
     this.container = undefined
   }
-
-  // TODO(step-4): add deterministic stepping + interpolation hooks.
-  // TODO(step-5): add renderFrame(width, height) for offline export.
 
   setControlMode(mode: ControlMode) {
     this.controlMode = mode
@@ -330,10 +330,6 @@ export class GaussianViewer {
     }
     this.resetOrbitTarget()
   }
-
-  // TODO(step-3): expose getCameraPose() / setCameraPose() for keyframes.
-  // TODO(step-4): add deterministic stepping + interpolation hooks.
-  // TODO(step-5): add renderFrame(width, height) for offline export.
 
   private captureCameraPose(): InternalPose | undefined {
     const camera = this.viewer?.camera

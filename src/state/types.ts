@@ -1,3 +1,4 @@
+/** Viewer and HUD state types. */
 export type ViewerStatus = 'idle' | 'loading' | 'ready' | 'error'
 export type ControlMode = 'orbit' | 'fly'
 

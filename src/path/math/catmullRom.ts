@@ -1,3 +1,4 @@
+/** Catmull-Rom spline and linear vec3 lerp for position interpolation between keyframes. */
 export type Vec3 = [number, number, number]
 
 export const catmullRom = (p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3, t: number): Vec3 => {

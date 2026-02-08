@@ -1,3 +1,7 @@
+/**
+ * App shell: mounts viewer, HUD, controls, keyframe panel, export panel.
+ * Wires viewer store, path store, PathPlayer, and export server.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SplatViewer } from './viewer/SplatViewer'
 import { ViewerHUD } from './ui/ViewerHUD'
@@ -60,6 +64,7 @@ function App() {
   const [exportOutputUrl, setExportOutputUrl] = useState<string | undefined>(undefined)
   const exportCancelRef = useRef(false)
 
+  // --- Sync path duration; FPS; control mode / speed / sensitivity / frustum ---
   useEffect(() => {
     playerRef.setKeyframes(keyframes)
     setDuration(playerRef.getDuration())
@@ -87,6 +92,7 @@ function App() {
     viewer.setFrustumVisible(showFrustum)
   }, [showFrustum, viewer])
 
+  // --- Scene load ---
   const handleLoad = async (nextUrl: string) => {
     const normalizedUrl = normalizeSceneUrl(nextUrl)
 
@@ -116,6 +122,7 @@ function App() {
     }
   }
 
+  // --- Keyframes & presets ---
   const handleAddKeyframe = () => {
     const pose = viewer.getCameraPose()
     if (!pose) {
@@ -207,6 +214,7 @@ function App() {
     setPaused(false)
   }
 
+  // --- Export MP4 (render frames client-side, server encodes via FFmpeg) ---
   const handleExport = async () => {
     if (isExporting) return
     if (keyframes.length < 2) {
@@ -330,6 +338,7 @@ function App() {
     return () => cancelAnimationFrame(raf)
   }, [isPreviewing, playerRef])
 
+  // --- Render ---
   return (
     <div className="app-shell">
       <SplatViewer viewer={viewer} />

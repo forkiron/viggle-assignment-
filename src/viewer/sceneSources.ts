@@ -1,3 +1,4 @@
+/** Scene preset and .ply URL validation (URL must end with .ply). */
 export interface SceneSource {
   id: string
   label: string
