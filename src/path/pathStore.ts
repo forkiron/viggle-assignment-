@@ -93,6 +93,13 @@ export const setSelected = (id: string | null) => {
   setState({ selectedId: id })
 }
 
+export const setKeyframes = (keyframes: Keyframe[]) => {
+  setState({
+    keyframes,
+    selectedId: keyframes[0]?.id ?? null,
+  })
+}
+
 export const setPreviewing = (value: boolean) => {
   console.info('[PathStore] setPreviewing', { value })
   setState({ isPreviewing: value, previewError: undefined, isPaused: false })
