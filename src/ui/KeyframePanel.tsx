@@ -17,6 +17,7 @@ interface KeyframePanelProps {
   onSetKeyframeTime: (id: string, time: number) => void
   onToggleFrustum: () => void
   showFrustum: boolean
+  onClearKeyframes: () => void
   onDeleteKeyframe: (id: string) => void
   onMoveKeyframe: (id: string, dir: -1 | 1) => void
   onSelectKeyframe: (id: string) => void
@@ -49,6 +50,7 @@ export function KeyframePanel({
   onSetKeyframeTime,
   onToggleFrustum,
   showFrustum,
+  onClearKeyframes,
   onDeleteKeyframe,
   onMoveKeyframe,
   onSelectKeyframe,
@@ -90,9 +92,14 @@ export function KeyframePanel({
           <div className="panel-title">Keyframes</div>
           <div className="panel-subtitle">Mode: {controlMode}</div>
         </div>
-        <button className="control-button" onClick={onAddKeyframe}>
-          Add Keyframe
-        </button>
+        <div className="panel-actions">
+          <button className="control-button" onClick={onAddKeyframe}>
+            Add Keyframe
+          </button>
+          <button className="control-button danger" onClick={onClearKeyframes}>
+            Clear All
+          </button>
+        </div>
       </div>
 
       <div className="panel-row">

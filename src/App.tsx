@@ -38,6 +38,7 @@ import {
   clearPreviewError,
   setSelected,
   setKeyframes,
+  clearKeyframes,
   setKeyframeTime,
   usePathStore,
 } from './path/pathStore'
@@ -347,6 +348,10 @@ function App() {
         onSetKeyframeTime={handleSetKeyframeTime}
         onToggleFrustum={() => setShowFrustum(!showFrustum)}
         showFrustum={showFrustum}
+        onClearKeyframes={() => {
+          playerRef.stop()
+          clearKeyframes()
+        }}
         onDeleteKeyframe={deleteKeyframe}
         onMoveKeyframe={moveKeyframe}
         onSelectKeyframe={setSelected}

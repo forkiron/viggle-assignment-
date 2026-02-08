@@ -101,6 +101,18 @@ export const setKeyframes = (keyframes: Keyframe[]) => {
   })
 }
 
+export const clearKeyframes = () => {
+  setState({
+    keyframes: [],
+    selectedId: null,
+    isPreviewing: false,
+    isPaused: false,
+    currentTime: 0,
+    duration: 0,
+    previewError: undefined,
+  })
+}
+
 export const setKeyframeTime = (id: string, t: number) => {
   const keyframes = state.keyframes.map((frame) =>
     frame.id === id ? { ...frame, t: Math.max(0, t) } : frame,
