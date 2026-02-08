@@ -23,7 +23,7 @@ import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
 import { samplePoseAtTime } from './path/player/sampler'
 import { generateCraneUp, generateDollyIn, generateFigure8, generateTurntable } from './path/presets'
-import { Vector3 } from 'three'
+import { Quaternion, Vector3 } from 'three'
 import {
   addKeyframe,
   deleteKeyframe,
@@ -125,9 +125,20 @@ function App() {
       return
     }
 
-    const target = viewer.getOrbitTarget() ?? new Vector3(0, 0, 0)
     const camPos = new Vector3(cameraPose.position[0], cameraPose.position[1], cameraPose.position[2])
+    const orbitTarget = viewer.getOrbitTarget()
+    let target = orbitTarget ?? new Vector3(0, 0, 0)
     const radius = Math.max(1, camPos.distanceTo(target))
+    if (!orbitTarget) {
+      const quat = new Quaternion(
+        cameraPose.quaternion[0],
+        cameraPose.quaternion[1],
+        cameraPose.quaternion[2],
+        cameraPose.quaternion[3],
+      )
+      const forward = new Vector3(0, 0, -1).applyQuaternion(quat).normalize()
+      target = camPos.clone().addScaledVector(forward, radius)
+    }
     const height = camPos.y - target.y
     const options = { target, radius, height, fov: cameraPose.fov, duration: 8 }
 
