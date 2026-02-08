@@ -250,6 +250,42 @@ export class GaussianViewer {
     }
   }
 
+  async renderToBlob(width: number, height: number): Promise<Blob> {
+    const renderer = this.viewer?.renderer as WebGLRenderer | undefined
+    if (!renderer) {
+      throw new Error('Renderer unavailable')
+    }
+
+    const canvas = renderer.domElement as HTMLCanvasElement
+    const prevSize = renderer.getSize(new Vector3())
+    const prevPixelRatio = renderer.getPixelRatio()
+
+    renderer.setPixelRatio(1)
+    renderer.setSize(width, height, false)
+
+    if (typeof this.viewer?.forceRenderNextFrame === 'function') {
+      this.viewer.forceRenderNextFrame()
+    }
+    if (typeof this.viewer?.render === 'function') {
+      this.viewer.render()
+    }
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (!result) {
+          reject(new Error('Failed to capture frame'))
+          return
+        }
+        resolve(result)
+      }, 'image/png')
+    })
+
+    renderer.setPixelRatio(prevPixelRatio)
+    renderer.setSize(prevSize.x, prevSize.y, false)
+
+    return blob
+  }
+
   getCameraPose(): CameraPose | null {
     const camera = this.viewer?.camera
     if (!camera) return null

@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SplatViewer } from './viewer/SplatViewer'
 import { ViewerHUD } from './ui/ViewerHUD'
 import { ViewerControls } from './ui/ViewerControls'
 import { GaussianViewer } from './viewer/gaussianViewer'
 import { KeyframePanel } from './ui/KeyframePanel'
+import { ExportPanel } from './ui/ExportPanel'
 import { PathPlayer } from './path/player/PathPlayer'
 import {
   resetViewerError,
@@ -20,6 +21,7 @@ import {
 } from './state/viewerStore'
 import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
+import { samplePoseAtTime } from './path/player/sampler'
 import {
   addKeyframe,
   deleteKeyframe,
@@ -36,6 +38,8 @@ import {
 } from './path/pathStore'
 
 const DEFAULT_SCENE_URL = ''
+const EXPORT_SERVER_URL = import.meta.env.VITE_EXPORT_SERVER_URL || 'http://localhost:5174'
+const DEFAULT_EXPORT = { width: 1280, height: 720, fps: 30 }
 
 function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
@@ -44,6 +48,11 @@ function App() {
   const { keyframes, selectedId, isPreviewing, isPaused, currentTime, duration, loop, previewError } =
     usePathStore((state) => state)
   const playerRef = useMemo(() => new PathPlayer(viewer), [viewer])
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
+  const [exportStatus, setExportStatus] = useState('Idle')
+  const [exportOutputUrl, setExportOutputUrl] = useState<string | undefined>(undefined)
+  const exportCancelRef = useRef(false)
 
   useEffect(() => {
     playerRef.setKeyframes(keyframes)
@@ -133,6 +142,96 @@ function App() {
     setPaused(false)
   }
 
+  const handleExport = async () => {
+    if (isExporting) return
+    if (keyframes.length < 2) {
+      setExportStatus('Add at least 2 keyframes to export.')
+      return
+    }
+    const totalDuration = duration || Math.max(0, keyframes[keyframes.length - 1].t - keyframes[0].t)
+    if (totalDuration <= 0) {
+      setExportStatus('Invalid duration.')
+      return
+    }
+
+    exportCancelRef.current = false
+    setIsExporting(true)
+    setExportProgress(0)
+    setExportOutputUrl(undefined)
+    setExportStatus('Starting export…')
+    viewer.setControlsEnabled(false)
+
+    try {
+      const frameCount = Math.ceil(totalDuration * DEFAULT_EXPORT.fps)
+      const settings = {
+        version: 1,
+        sceneUrl,
+        keyframes,
+        render: { ...DEFAULT_EXPORT, duration: totalDuration, frameCount },
+      }
+
+      const startRes = await fetch(`${EXPORT_SERVER_URL}/export/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      if (!startRes.ok) throw new Error('Failed to start export')
+      const { id } = await startRes.json()
+
+      const startT = keyframes[0].t
+
+      for (let frame = 0; frame < frameCount; frame += 1) {
+        if (exportCancelRef.current) {
+          await fetch(`${EXPORT_SERVER_URL}/export/${id}/cancel`, { method: 'POST' })
+          setExportStatus('Export cancelled.')
+          setIsExporting(false)
+          viewer.setControlsEnabled(true)
+          return
+        }
+
+        const t = startT + frame / DEFAULT_EXPORT.fps
+        const pose = samplePoseAtTime(keyframes, t)
+        if (!pose) continue
+
+        viewer.setCameraPose(pose)
+        const blob = await viewer.renderToBlob(DEFAULT_EXPORT.width, DEFAULT_EXPORT.height)
+
+        const form = new FormData()
+        form.append('index', String(frame))
+        form.append('frame', blob, `frame_${String(frame).padStart(6, '0')}.png`)
+
+        const frameRes = await fetch(`${EXPORT_SERVER_URL}/export/${id}/frame`, {
+          method: 'POST',
+          body: form,
+        })
+        if (!frameRes.ok) throw new Error('Failed to upload frame')
+
+        setExportProgress((frame + 1) / frameCount)
+        setExportStatus(`Rendering frames: ${frame + 1}/${frameCount}`)
+      }
+
+      setExportStatus('Encoding video…')
+      const finishRes = await fetch(`${EXPORT_SERVER_URL}/export/${id}/finish`, { method: 'POST' })
+      if (!finishRes.ok) throw new Error('Failed to start encoding')
+      const { output } = await finishRes.json()
+
+      setExportOutputUrl(`${EXPORT_SERVER_URL}${output}`)
+      setExportStatus('Export complete.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Export failed.'
+      setExportStatus(message)
+    } finally {
+      setIsExporting(false)
+      viewer.setControlsEnabled(true)
+    }
+  }
+
+  const handleCancelExport = () => {
+    if (!isExporting) return
+    exportCancelRef.current = true
+    setExportStatus('Cancelling…')
+  }
+
   const handleToggleLoop = () => {
     const next = !loop
     playerRef.setLoop(next)
@@ -189,6 +288,14 @@ function App() {
         onSeek={handleSeek}
         controlMode={controlMode}
         currentPose={viewer.getCameraPose()}
+      />
+      <ExportPanel
+        isExporting={isExporting}
+        progress={exportProgress}
+        status={exportStatus}
+        onExport={handleExport}
+        onCancel={handleCancelExport}
+        outputUrl={exportOutputUrl}
       />
       <ViewerControls
         presets={scenePresets}

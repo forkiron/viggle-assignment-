@@ -18,6 +18,17 @@ npm install
 npm run dev
 ```
 
+## Export Server
+
+The MP4 export uses a small Node server with native FFmpeg. Start it in another terminal:
+
+```bash
+npm run server
+```
+
+Requirements:
+- FFmpeg installed and available on your PATH.
+
 ## Load a Scene
 
 1. Pick a preset (placeholders for now) or paste a public `.ply` URL.
@@ -29,6 +40,7 @@ npm run dev
 - Renderer: GaussianSplats3D (https://github.com/mkkellogg/GaussianSplats3D)
 - Example `.ply` scenes can be found from the pretrained links in https://github.com/graphdeco-inria/gaussian-splatting
 - Presets are placeholders so you can paste your own URLs.
+- Export server default URL: `http://localhost:5174` (override with `VITE_EXPORT_SERVER_URL`).
 
 ## Project Structure
 
