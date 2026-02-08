@@ -6,6 +6,7 @@ export class FlyControls {
   private camera: Camera
   private input: InputManager
   private speed = 3
+  private sprintMultiplier = 2.5
   private sensitivity = 0.002
   private enabled = false
   private yaw = 0
@@ -58,7 +59,7 @@ export class FlyControls {
     if (this.input.isKeyDown('KeyA')) this.move.x -= 1
     if (this.input.isKeyDown('KeyD')) this.move.x += 1
     if (this.input.isKeyDown('Space')) this.move.y += 1
-    if (this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight')) this.move.y -= 1
+    if (this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight')) this.move.y -= 1
 
     if (this.move.lengthSq() > 0) {
       this.move.normalize()
@@ -71,7 +72,9 @@ export class FlyControls {
         .addScaledVector(this.right, this.move.x)
         .addScaledVector(up, this.move.y)
 
-      this.camera.position.addScaledVector(moveDir, this.speed * dt)
+      const sprint =
+        this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight') ? this.sprintMultiplier : 1
+      this.camera.position.addScaledVector(moveDir, this.speed * sprint * dt)
     }
   }
 
