@@ -17,6 +17,7 @@ import {
   setViewerControlMode,
   setViewerMoveSpeed,
   setViewerLookSensitivity,
+  setShowFrustum,
   useViewerStore,
 } from './state/viewerStore'
 import { createFpsTracker } from './viewer/metrics'
@@ -37,6 +38,7 @@ import {
   clearPreviewError,
   setSelected,
   setKeyframes,
+  setKeyframeTime,
   usePathStore,
 } from './path/pathStore'
 
@@ -46,7 +48,7 @@ const DEFAULT_EXPORT = { width: 1280, height: 720, fps: 30 }
 
 function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
-  const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity } =
+  const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity, showFrustum } =
     useViewerStore((state) => state)
   const { keyframes, selectedId, isPreviewing, isPaused, currentTime, duration, loop, previewError } =
     usePathStore((state) => state)
@@ -79,6 +81,10 @@ function App() {
   useEffect(() => {
     viewer.setLookSensitivity(lookSensitivity)
   }, [lookSensitivity, viewer])
+
+  useEffect(() => {
+    viewer.setFrustumVisible(showFrustum)
+  }, [showFrustum, viewer])
 
   const handleLoad = async (nextUrl: string) => {
     const normalizedUrl = normalizeSceneUrl(nextUrl)
@@ -162,6 +168,15 @@ function App() {
 
     setKeyframes(frames)
     clearPreviewError()
+  }
+
+  const handleSetKeyframeTime = (id: string, time: number) => {
+    if (isPreviewing || isPaused) {
+      playerRef.stop()
+      setPreviewing(false)
+      setPaused(false)
+    }
+    setKeyframeTime(id, time)
   }
 
   const handlePreviewPlay = () => {
@@ -329,6 +344,9 @@ function App() {
         previewError={previewError}
         onAddKeyframe={handleAddKeyframe}
         onPreset={handlePreset}
+        onSetKeyframeTime={handleSetKeyframeTime}
+        onToggleFrustum={() => setShowFrustum(!showFrustum)}
+        showFrustum={showFrustum}
         onDeleteKeyframe={deleteKeyframe}
         onMoveKeyframe={moveKeyframe}
         onSelectKeyframe={setSelected}

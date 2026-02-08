@@ -1,6 +1,7 @@
 import type { CameraPose, Keyframe } from '../path/types'
 import type { ControlMode } from '../state/types'
 import { PlaybackControls } from './PlaybackControls'
+import { useEffect, useRef, useState } from 'react'
 
 interface KeyframePanelProps {
   keyframes: Keyframe[]
@@ -13,6 +14,9 @@ interface KeyframePanelProps {
   previewError?: string
   onAddKeyframe: () => void
   onPreset: (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => void
+  onSetKeyframeTime: (id: string, time: number) => void
+  onToggleFrustum: () => void
+  showFrustum: boolean
   onDeleteKeyframe: (id: string) => void
   onMoveKeyframe: (id: string, dir: -1 | 1) => void
   onSelectKeyframe: (id: string) => void
@@ -42,6 +46,9 @@ export function KeyframePanel({
   previewError,
   onAddKeyframe,
   onPreset,
+  onSetKeyframeTime,
+  onToggleFrustum,
+  showFrustum,
   onDeleteKeyframe,
   onMoveKeyframe,
   onSelectKeyframe,
@@ -53,6 +60,29 @@ export function KeyframePanel({
   controlMode,
   currentPose,
 }: KeyframePanelProps) {
+  const timelineRef = useRef<HTMLDivElement>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+
+  const clampTime = (value: number) => Math.max(0, Math.min(duration || 0, value))
+
+  const updateFromPointer = (clientX: number) => {
+    if (!timelineRef.current || !draggingId || duration <= 0) return
+    const rect = timelineRef.current.getBoundingClientRect()
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    onSetKeyframeTime(draggingId, clampTime(ratio * duration))
+  }
+
+  useEffect(() => {
+    if (!draggingId) return
+    const handleMove = (event: PointerEvent) => updateFromPointer(event.clientX)
+    const handleUp = () => setDraggingId(null)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    return () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+    }
+  }, [draggingId, duration])
   return (
     <div className="keyframe-panel">
       <div className="panel-header">
@@ -62,6 +92,12 @@ export function KeyframePanel({
         </div>
         <button className="control-button" onClick={onAddKeyframe}>
           Add Keyframe
+        </button>
+      </div>
+
+      <div className="panel-row">
+        <button className="control-button" onClick={onToggleFrustum}>
+          {showFrustum ? 'Frustum On' : 'Frustum Off'}
         </button>
       </div>
 
@@ -88,6 +124,23 @@ export function KeyframePanel({
         <div className="panel-empty">No keyframes yet. Add your first shot.</div>
       ) : (
         <div className="keyframe-list">
+          <div className="timeline" ref={timelineRef}>
+            {keyframes.map((frame) => {
+              const left = duration > 0 ? (frame.t / duration) * 100 : 0
+              return (
+                <div
+                  key={frame.id}
+                  className={`timeline-dot ${frame.id === selectedId ? 'selected' : ''}`}
+                  style={{ left: `${left}%` }}
+                  onPointerDown={(event) => {
+                    event.preventDefault()
+                    setDraggingId(frame.id)
+                    updateFromPointer(event.clientX)
+                  }}
+                />
+              )
+            })}
+          </div>
           {keyframes.map((frame, index) => {
             const isSelected = frame.id === selectedId
             return (
@@ -103,6 +156,7 @@ export function KeyframePanel({
               >
                 <div className="keyframe-label">Shot {index + 1}</div>
                 <div className="keyframe-meta">{formatPoseLabel(frame.pose)}</div>
+                <div className="keyframe-meta">t = {frame.t.toFixed(2)}s</div>
                 <div className="keyframe-actions">
                   <button
                     className="control-button"

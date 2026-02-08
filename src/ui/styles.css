@@ -205,6 +205,11 @@ body,
   color: var(--muted);
 }
 
+.panel-row {
+  display: flex;
+  gap: 8px;
+}
+
 .panel-presets {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -222,6 +227,30 @@ body,
   gap: 10px;
   max-height: 260px;
   overflow: auto;
+}
+
+.timeline {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  margin-bottom: 6px;
+}
+
+.timeline-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.timeline-dot.selected {
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.35);
 }
 
 .keyframe-row {

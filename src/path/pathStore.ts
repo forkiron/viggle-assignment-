@@ -94,10 +94,19 @@ export const setSelected = (id: string | null) => {
 }
 
 export const setKeyframes = (keyframes: Keyframe[]) => {
+  const sorted = [...keyframes].sort((a, b) => a.t - b.t)
   setState({
-    keyframes,
-    selectedId: keyframes[0]?.id ?? null,
+    keyframes: sorted,
+    selectedId: sorted[0]?.id ?? null,
   })
+}
+
+export const setKeyframeTime = (id: string, t: number) => {
+  const keyframes = state.keyframes.map((frame) =>
+    frame.id === id ? { ...frame, t: Math.max(0, t) } : frame,
+  )
+  const sorted = [...keyframes].sort((a, b) => a.t - b.t)
+  setState({ keyframes: sorted })
 }
 
 export const setPreviewing = (value: boolean) => {
