@@ -221,6 +221,12 @@ export class GaussianViewer {
     this.controlMode = mode
     if (!this.controlsEnabled) return
     if (mode === 'orbit') {
+      if (this.viewer?.camera && this.orbitControls) {
+        const camera = this.viewer.camera
+        const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
+        const target = new Vector3().copy(camera.position).addScaledVector(forward, 10)
+        this.orbitControls.setTarget(target)
+      }
       this.input?.setPointerLockEnabled(false)
       this.flyControls?.disable()
       this.orbitControls?.enable()

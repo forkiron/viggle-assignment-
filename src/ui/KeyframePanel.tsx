@@ -36,6 +36,23 @@ const formatPoseLabel = (pose: CameraPose) => {
   return `pos ${magnitude.toFixed(1)}`
 }
 
+const IconUp = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 19V5M5 12l7-7 7 7" />
+  </svg>
+)
+const IconDown = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 5v14M5 12l7 7 7-7" />
+  </svg>
+)
+const IconTrash = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" />
+    <path d="M10 11v6M14 11v6" />
+  </svg>
+)
+
 export function KeyframePanel({
   keyframes,
   selectedId,
@@ -88,43 +105,34 @@ export function KeyframePanel({
   return (
     <div className="keyframe-panel">
       <div className="panel-header">
-        <div>
-          <div className="panel-title">Keyframes</div>
-          <div className="panel-subtitle">Mode: {controlMode}</div>
+        <div className="panel-title-row">
+          <span className="panel-title">Keyframes</span>
+          <span className="panel-subtitle">Mode: {controlMode}</span>
         </div>
         <div className="panel-actions">
-          <button className="control-button" onClick={onAddKeyframe}>
-            Add Keyframe
+          <button className="control-button control-button-sm" onClick={onAddKeyframe} title="Add keyframe">
+            Add
           </button>
-          <button className="control-button danger" onClick={onClearKeyframes}>
-            Clear All
+          <button className="control-button control-button-sm danger" onClick={onClearKeyframes} title="Clear all">
+            Clear
           </button>
         </div>
       </div>
 
-      <div className="panel-row">
-        <button className="control-button" onClick={onToggleFrustum}>
-          {showFrustum ? 'Frustum On' : 'Frustum Off'}
+      <div className="panel-row panel-row-tight">
+        <button className={`control-button control-button-sm ${showFrustum ? 'active' : ''}`} onClick={onToggleFrustum} title="Toggle frustum">
+          {showFrustum ? 'Frustum on' : 'Frustum off'}
         </button>
-      </div>
-
-      <div className="panel-presets">
-        <button className="control-button" onClick={() => onPreset('turntable')}>
-          Turntable
-        </button>
-        <button className="control-button" onClick={() => onPreset('dolly-in')}>
-          Dolly-In
-        </button>
-        <button className="control-button" onClick={() => onPreset('crane-up')}>
-          Crane-Up
-        </button>
-        <button className="control-button" onClick={() => onPreset('figure-8')}>
-          Figure-8
-        </button>
+        <div className="panel-presets">
+          <button className="control-button control-button-sm" onClick={() => onPreset('turntable')} title="Turntable">Turntable</button>
+          <button className="control-button control-button-sm" onClick={() => onPreset('dolly-in')} title="Dolly in">Dolly</button>
+          <button className="control-button control-button-sm" onClick={() => onPreset('crane-up')} title="Crane up">Crane</button>
+          <button className="control-button control-button-sm" onClick={() => onPreset('figure-8')} title="Figure 8">Figure-8</button>
+        </div>
       </div>
 
       {currentPose ? (
-        <div className="panel-meta">Camera: {formatPoseLabel(currentPose)}</div>
+        <div className="panel-meta">Camera {formatPoseLabel(currentPose)}</div>
       ) : null}
 
       {keyframes.length === 0 ? (
@@ -161,38 +169,42 @@ export function KeyframePanel({
                   if (event.key === 'Enter') onSelectKeyframe(frame.id)
                 }}
               >
-                <div className="keyframe-label">Shot {index + 1}</div>
-                <div className="keyframe-meta">{formatPoseLabel(frame.pose)}</div>
-                <div className="keyframe-meta">t = {frame.t.toFixed(2)}s</div>
+                <div className="keyframe-row-main">
+                  <span className="keyframe-label">Shot {index + 1}</span>
+                  <span className="keyframe-meta">{formatPoseLabel(frame.pose)} · t={frame.t.toFixed(2)}s</span>
+                </div>
                 <div className="keyframe-actions">
                   <button
-                    className="control-button"
+                    className="control-icon-btn"
+                    title="Move up"
                     onClick={(event) => {
                       event.stopPropagation()
                       onMoveKeyframe(frame.id, -1)
                     }}
                     disabled={index === 0}
                   >
-                    Up
+                    <IconUp />
                   </button>
                   <button
-                    className="control-button"
+                    className="control-icon-btn"
+                    title="Move down"
                     onClick={(event) => {
                       event.stopPropagation()
                       onMoveKeyframe(frame.id, 1)
                     }}
                     disabled={index === keyframes.length - 1}
                   >
-                    Down
+                    <IconDown />
                   </button>
                   <button
-                    className="control-button danger"
+                    className="control-icon-btn danger"
+                    title="Delete"
                     onClick={(event) => {
                       event.stopPropagation()
                       onDeleteKeyframe(frame.id)
                     }}
                   >
-                    Delete
+                    <IconTrash />
                   </button>
                 </div>
               </div>

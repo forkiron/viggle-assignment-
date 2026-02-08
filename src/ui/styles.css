@@ -172,82 +172,107 @@ body,
   position: absolute;
   left: 20px;
   bottom: 20px;
-  width: min(360px, 92vw);
-  padding: 18px;
+  width: min(320px, 92vw);
+  padding: 10px 12px;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow: var(--shadow);
   display: grid;
-  gap: 12px;
+  gap: 6px;
   z-index: 2;
+  max-height: 72vh;
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-}
-
-.panel-actions {
-  display: grid;
-  grid-auto-flow: column;
   gap: 8px;
 }
 
+.panel-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 4px;
+}
+
 .panel-title {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .panel-subtitle {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--muted);
 }
 
 .panel-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
 .panel-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+}
+
+.panel-row-tight {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-row-tight .panel-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.control-button-sm {
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: 6px;
 }
 
 .panel-presets {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 4px;
 }
 
 .panel-empty {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .keyframe-list {
   display: grid;
-  gap: 10px;
-  max-height: 260px;
+  gap: 4px;
+  max-height: 200px;
   overflow: auto;
 }
 
 .timeline {
   position: relative;
-  height: 12px;
+  height: 8px;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.2);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .timeline-dot {
   position: absolute;
   top: 50%;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent);
   transform: translate(-50%, -50%);
@@ -260,11 +285,13 @@ body,
 }
 
 .keyframe-row {
-  padding: 10px;
+  padding: 6px 8px;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 10px;
-  display: grid;
-  gap: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   cursor: pointer;
   background: rgba(15, 23, 42, 0.4);
 }
@@ -274,44 +301,80 @@ body,
   box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.4);
 }
 
+.keyframe-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
 .keyframe-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .keyframe-meta {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--muted);
 }
 
 .keyframe-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
-.control-button.danger {
-  border-color: rgba(248, 113, 113, 0.6);
-  color: #fecaca;
+.control-icon-btn {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--text);
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.control-icon-btn:hover:not(:disabled) {
+  border-color: var(--accent-strong);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.control-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.control-icon-btn.danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fca5a5;
+}
+
+.control-icon-btn.danger:hover {
+  border-color: rgba(248, 113, 113, 0.7);
+  background: rgba(127, 29, 29, 0.3);
 }
 
 .panel-footer {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .playback-controls {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .playback-row {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .playback-time {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
