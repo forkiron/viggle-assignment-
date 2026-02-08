@@ -250,6 +250,10 @@ export class GaussianViewer {
     }
   }
 
+  getOrbitTarget() {
+    return this.orbitControls?.getTarget() ?? null
+  }
+
   async renderToBlob(width: number, height: number): Promise<Blob> {
     const renderer = this.viewer?.renderer as WebGLRenderer | undefined
     if (!renderer) {
