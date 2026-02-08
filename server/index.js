@@ -120,6 +120,11 @@ app.post('/export/:id/cancel', (req, res) => {
   }
 
   entry.status = 'cancelled'
+  try {
+    fs.rmSync(entry.dir, { recursive: true, force: true })
+  } catch (err) {
+    console.error('Failed to remove export directory', err)
+  }
   res.json({ ok: true })
 })
 

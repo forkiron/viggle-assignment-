@@ -230,6 +230,7 @@ function App() {
     if (!isExporting) return
     exportCancelRef.current = true
     setExportStatus('Cancelling…')
+    setExportOutputUrl(undefined)
   }
 
   const handleToggleLoop = () => {
