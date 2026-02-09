@@ -1,5 +1,9 @@
 # Gaussian Splats Viewer (MVP)
 
+
+https://github.com/user-attachments/assets/29b71059-77e1-4c99-88bf-7e6495faba22
+
+
 A React + Vite viewer that loads `.ply` Gaussian splats (GaussianSplats3D), supports orbit/fly navigation, camera path recording with keyframes, and deterministic MP4 export via a local Node server and FFmpeg.
 
 ## Prerequisites
@@ -40,7 +44,7 @@ Deterministic export: each export saves `path.json` (scene URL, keyframes, rende
 
 ## Extras implemented
 
-- **Timeline editor:** draggable keyframe times + scrubber (no crossing).
+- **Timeline editor:** draggable keyframe times + scrubber.
 - **Path smoothing:** adjustable smoothing strength + preview.
 - **Deterministic export:** path.json + render settings ensure repeatable outputs.
 
