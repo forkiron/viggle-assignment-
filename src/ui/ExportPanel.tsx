@@ -5,10 +5,21 @@ interface ExportPanelProps {
   status: string
   onExport: () => void
   onCancel: () => void
+  onRerun: () => void
+  canRerun: boolean
   outputUrl?: string
 }
 
-export function ExportPanel({ isExporting, progress, status, onExport, onCancel, outputUrl }: ExportPanelProps) {
+export function ExportPanel({
+  isExporting,
+  progress,
+  status,
+  onExport,
+  onCancel,
+  onRerun,
+  canRerun,
+  outputUrl,
+}: ExportPanelProps) {
   return (
     <div className="export-panel">
       <label className="control-label">Export</label>
@@ -22,6 +33,9 @@ export function ExportPanel({ isExporting, progress, status, onExport, onCancel,
         </button>
         <button className="control-button" onClick={onCancel} disabled={!isExporting}>
           Cancel
+        </button>
+        <button className="control-button" onClick={onRerun} disabled={isExporting || !canRerun}>
+          Re-run Last
         </button>
       </div>
       {outputUrl ? (

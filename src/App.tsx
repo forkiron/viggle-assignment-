@@ -60,6 +60,7 @@ function App() {
   const [exportStatus, setExportStatus] = useState('Idle')
   const [exportOutputUrl, setExportOutputUrl] = useState<string | undefined>(undefined)
   const exportCancelRef = useRef(false)
+  const [lastExportSettings, setLastExportSettings] = useState<any | null>(null)
 
   // --- Sync path duration; FPS; control mode / speed / sensitivity / frustum ---
   useEffect(() => {
@@ -166,18 +167,7 @@ function App() {
   }
 
   // --- Export MP4 (render frames client-side, server encodes via FFmpeg) ---
-  const handleExport = async () => {
-    if (isExporting) return
-    if (keyframes.length < 2) {
-      setExportStatus('Add at least 2 keyframes to export.')
-      return
-    }
-    const totalDuration = duration || Math.max(0, keyframes[keyframes.length - 1].t - keyframes[0].t)
-    if (totalDuration <= 0) {
-      setExportStatus('Invalid duration.')
-      return
-    }
-
+  const runExport = async (settings: any) => {
     exportCancelRef.current = false
     setIsExporting(true)
     setExportProgress(0)
@@ -186,14 +176,6 @@ function App() {
     viewer.setControlsEnabled(false)
 
     try {
-      const frameCount = Math.ceil(totalDuration * DEFAULT_EXPORT.fps)
-      const settings = {
-        version: 1,
-        sceneUrl,
-        keyframes,
-        render: { ...DEFAULT_EXPORT, duration: totalDuration, frameCount },
-      }
-
       const startRes = await fetch(`${EXPORT_SERVER_URL}/export/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -202,7 +184,9 @@ function App() {
       if (!startRes.ok) throw new Error('Failed to start export')
       const { id } = await startRes.json()
 
-      const startT = keyframes[0].t
+      const { keyframes: exportKeyframes, render } = settings
+      const frameCount = render.frameCount
+      const startT = exportKeyframes[0].t
 
       for (let frame = 0; frame < frameCount; frame += 1) {
         if (exportCancelRef.current) {
@@ -213,12 +197,12 @@ function App() {
           return
         }
 
-        const t = startT + frame / DEFAULT_EXPORT.fps
-        const pose = samplePoseAtTime(keyframes, t, smoothing)
+        const t = startT + frame / render.fps
+        const pose = samplePoseAtTime(exportKeyframes, t, render.smoothing ?? smoothing)
         if (!pose) continue
 
         viewer.setCameraPose(pose)
-        const blob = await viewer.renderToBlob(DEFAULT_EXPORT.width, DEFAULT_EXPORT.height)
+        const blob = await viewer.renderToBlob(render.width, render.height)
 
         const form = new FormData()
         form.append('index', String(frame))
@@ -248,6 +232,35 @@ function App() {
       setIsExporting(false)
       viewer.setControlsEnabled(true)
     }
+  }
+
+  const handleExport = async () => {
+    if (isExporting) return
+    if (keyframes.length < 2) {
+      setExportStatus('Add at least 2 keyframes to export.')
+      return
+    }
+    const totalDuration = duration || Math.max(0, keyframes[keyframes.length - 1].t - keyframes[0].t)
+    if (totalDuration <= 0) {
+      setExportStatus('Invalid duration.')
+      return
+    }
+
+    const frameCount = Math.ceil(totalDuration * DEFAULT_EXPORT.fps)
+    const settings = {
+      version: 1,
+      sceneUrl,
+      keyframes,
+      render: { ...DEFAULT_EXPORT, duration: totalDuration, frameCount, smoothing },
+    }
+
+    setLastExportSettings(settings)
+    await runExport(settings)
+  }
+
+  const handleRerunExport = async () => {
+    if (isExporting || !lastExportSettings) return
+    await runExport(lastExportSettings)
   }
 
   const handleCancelExport = () => {
@@ -342,6 +355,8 @@ function App() {
         exportStatus={exportStatus}
         onExport={handleExport}
         onCancelExport={handleCancelExport}
+        onRerunExport={handleRerunExport}
+        canRerunExport={!!lastExportSettings}
         exportOutputUrl={exportOutputUrl}
       />
     </div>

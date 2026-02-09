@@ -26,6 +26,8 @@ interface ViewerControlsProps {
   exportStatus: string
   onExport: () => void
   onCancelExport: () => void
+  onRerunExport: () => void
+  canRerunExport: boolean
   exportOutputUrl?: string
 }
 
@@ -49,6 +51,8 @@ export function ViewerControls({
   exportStatus,
   onExport,
   onCancelExport,
+  onRerunExport,
+  canRerunExport,
   exportOutputUrl,
 }: ViewerControlsProps) {
   const [selectedPreset, setSelectedPreset] = useState(presets[0]?.id ?? '')
@@ -186,6 +190,8 @@ export function ViewerControls({
         status={exportStatus}
         onExport={onExport}
         onCancel={onCancelExport}
+        onRerun={onRerunExport}
+        canRerun={canRerunExport}
         outputUrl={exportOutputUrl}
       />
     </div>
