@@ -56,6 +56,20 @@ export const samplePoseAtTime = (
   const rotation = slerpQuat(k1.pose.quaternion, k2.pose.quaternion, eased)
   const fov = lerp(k1.pose.fov, k2.pose.fov, eased)
 
+  if (typeof window !== 'undefined') {
+    const debug = (window as unknown as { __PATH_DEBUG__?: boolean }).__PATH_DEBUG__
+    if (debug) {
+      console.info('[PathSampler]', {
+        segment: segmentIndex,
+        tGlobal,
+        u,
+        eased,
+        smoothingStrength,
+        position,
+      })
+    }
+  }
+
   return {
     position,
     quaternion: rotation,

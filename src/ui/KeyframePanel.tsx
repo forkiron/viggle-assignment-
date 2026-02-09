@@ -82,14 +82,17 @@ export function KeyframePanel({
 }: KeyframePanelProps) {
   const timelineRef = useRef<HTMLDivElement>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
-
-  const clampTime = (value: number) => Math.max(0, Math.min(duration || 0, value))
+  const [draggingIsRightmost, setDraggingIsRightmost] = useState(false)
 
   const updateFromPointer = (clientX: number) => {
-    if (!timelineRef.current || !draggingId || duration <= 0) return
+    if (!timelineRef.current || !draggingId) return
     const rect = timelineRef.current.getBoundingClientRect()
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-    onSetKeyframeTime(draggingId, clampTime(ratio * duration))
+    const baseDuration = Math.max(duration, 0.1)
+    const rawRatio = (clientX - rect.left) / rect.width
+    const maxRatio = draggingIsRightmost ? 3 : 1
+    const ratio = Math.max(0, Math.min(maxRatio, rawRatio))
+    const nextTime = ratio * baseDuration
+    onSetKeyframeTime(draggingId, Math.max(0, nextTime))
   }
 
   useEffect(() => {
@@ -103,6 +106,18 @@ export function KeyframePanel({
       window.removeEventListener('pointerup', handleUp)
     }
   }, [draggingId, duration])
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'e') return
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+      event.preventDefault()
+      onAddKeyframe()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onAddKeyframe])
   return (
     <div className="keyframe-panel">
       <div className="panel-header">
@@ -164,6 +179,7 @@ export function KeyframePanel({
                   onPointerDown={(event) => {
                     event.preventDefault()
                     setDraggingId(frame.id)
+                    setDraggingIsRightmost(frame.id === keyframes[keyframes.length - 1]?.id)
                     updateFromPointer(event.clientX)
                   }}
                 />
