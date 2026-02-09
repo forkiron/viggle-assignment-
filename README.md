@@ -1,4 +1,4 @@
-# Gaussian Splats Viewer (MVP)
+Very Cool Gaussian Splats Viewer 
 
 
 https://github.com/user-attachments/assets/29b71059-77e1-4c99-88bf-7e6495faba22
