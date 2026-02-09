@@ -21,7 +21,7 @@ import {
   setViewerControlMode,
   setViewerMoveSpeed,
   setViewerLookSensitivity,
-  setShowFrustum,
+  setSmoothing,
   useViewerStore,
 } from './state/viewerStore'
 import { createFpsTracker } from './viewer/metrics'
@@ -53,7 +53,7 @@ const DEFAULT_EXPORT = { width: 1280, height: 720, fps: 30 }
 
 function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
-  const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity, showFrustum } =
+  const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity, smoothing } =
     useViewerStore((state) => state)
   const { keyframes, selectedId, isPreviewing, isPaused, currentTime, duration, loop, previewError } =
     usePathStore((state) => state)
@@ -89,8 +89,8 @@ function App() {
   }, [lookSensitivity, viewer])
 
   useEffect(() => {
-    viewer.setFrustumVisible(showFrustum)
-  }, [showFrustum, viewer])
+    playerRef.setSmoothing(smoothing)
+  }, [smoothing, playerRef])
 
   // --- Scene load ---
   const handleLoad = async (nextUrl: string) => {
@@ -263,7 +263,7 @@ function App() {
         }
 
         const t = startT + frame / DEFAULT_EXPORT.fps
-        const pose = samplePoseAtTime(keyframes, t)
+        const pose = samplePoseAtTime(keyframes, t, smoothing)
         if (!pose) continue
 
         viewer.setCameraPose(pose)
@@ -355,8 +355,8 @@ function App() {
         onAddKeyframe={handleAddKeyframe}
         onPreset={handlePreset}
         onSetKeyframeTime={handleSetKeyframeTime}
-        onToggleFrustum={() => setShowFrustum(!showFrustum)}
-        showFrustum={showFrustum}
+        smoothing={smoothing}
+        onSmoothingChange={(value) => setSmoothing(value)}
         onClearKeyframes={() => {
           playerRef.stop()
           clearKeyframes()
@@ -371,14 +371,6 @@ function App() {
         onSeek={handleSeek}
         controlMode={controlMode}
         currentPose={viewer.getCameraPose()}
-      />
-      <ExportPanel
-        isExporting={isExporting}
-        progress={exportProgress}
-        status={exportStatus}
-        onExport={handleExport}
-        onCancel={handleCancelExport}
-        outputUrl={exportOutputUrl}
       />
       <ViewerControls
         presets={scenePresets}
@@ -395,6 +387,12 @@ function App() {
         onControlModeChange={(mode) => setViewerControlMode(mode)}
         onMoveSpeedChange={(value) => setViewerMoveSpeed(value)}
         onLookSensitivityChange={(value) => setViewerLookSensitivity(value)}
+        isExporting={isExporting}
+        exportProgress={exportProgress}
+        exportStatus={exportStatus}
+        onExport={handleExport}
+        onCancelExport={handleCancelExport}
+        exportOutputUrl={exportOutputUrl}
       />
     </div>
   )

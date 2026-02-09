@@ -11,6 +11,6 @@ export interface ViewerState {
   controlMode: ControlMode
   moveSpeed: number
   lookSensitivity: number
-  showFrustum: boolean
+  smoothing: number
   error?: string
 }

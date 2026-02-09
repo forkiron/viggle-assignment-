@@ -1,8 +1,9 @@
-/** Right panel: navigation mode (orbit/fly), move speed, look sensitivity, scene preset/URL, Load, Frame Scene, Reset View. */
+/** Right panel: navigation mode (orbit/fly), move speed, look sensitivity, scene preset/URL, Load, Frame Scene, Reset View, Export. */
 import { useMemo, useState } from 'react'
 import type { ViewerStatus } from '../state/types'
 import type { SceneSource } from '../viewer/sceneSources'
 import type { ControlMode } from '../state/types'
+import { ExportPanel } from './ExportPanel'
 
 interface ViewerControlsProps {
   presets: SceneSource[]
@@ -19,6 +20,13 @@ interface ViewerControlsProps {
   onControlModeChange: (mode: ControlMode) => void
   onMoveSpeedChange: (value: number) => void
   onLookSensitivityChange: (value: number) => void
+  // Export props
+  isExporting: boolean
+  exportProgress: number
+  exportStatus: string
+  onExport: () => void
+  onCancelExport: () => void
+  exportOutputUrl?: string
 }
 
 export function ViewerControls({
@@ -36,6 +44,12 @@ export function ViewerControls({
   onControlModeChange,
   onMoveSpeedChange,
   onLookSensitivityChange,
+  isExporting,
+  exportProgress,
+  exportStatus,
+  onExport,
+  onCancelExport,
+  exportOutputUrl,
 }: ViewerControlsProps) {
   const [selectedPreset, setSelectedPreset] = useState(presets[0]?.id ?? '')
 
@@ -140,6 +154,15 @@ export function ViewerControls({
           Reset View
         </button>
       </div>
+
+      <ExportPanel
+        isExporting={isExporting}
+        progress={exportProgress}
+        status={exportStatus}
+        onExport={onExport}
+        onCancel={onCancelExport}
+        outputUrl={exportOutputUrl}
+      />
     </div>
   )
 }

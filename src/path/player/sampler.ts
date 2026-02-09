@@ -9,7 +9,11 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t
  * Interpolates camera pose at global time t: position via Catmull-Rom (or linear if <3 keyframes),
  * rotation via SLERP, FOV via linear; segment time is eased with easeInOutCubic.
  */
-export const samplePoseAtTime = (keyframes: Keyframe[], tGlobal: number): CameraPose | null => {
+export const samplePoseAtTime = (
+  keyframes: Keyframe[],
+  tGlobal: number,
+  smoothingStrength = 1,
+): CameraPose | null => {
   if (keyframes.length === 0) return null
   if (keyframes.length === 1) return keyframes[0].pose
 
@@ -38,12 +42,15 @@ export const samplePoseAtTime = (keyframes: Keyframe[], tGlobal: number): Camera
   const p2 = k2.pose.position
 
   let position: CameraPose['position']
+  const linearPos = lerpVec3(p1, p2, eased)
   if (sorted.length < 3) {
-    position = lerpVec3(p1, p2, eased)
+    position = linearPos
   } else {
     const p0 = sorted[Math.max(0, segmentIndex - 1)].pose.position
     const p3 = sorted[Math.min(sorted.length - 1, segmentIndex + 2)].pose.position
-    position = catmullRom(p0, p1, p2, p3, eased)
+    const splinePos = catmullRom(p0, p1, p2, p3, eased)
+    const strength = Math.max(0, Math.min(1, smoothingStrength))
+    position = lerpVec3(linearPos, splinePos, strength)
   }
 
   const rotation = slerpQuat(k1.pose.quaternion, k2.pose.quaternion, eased)

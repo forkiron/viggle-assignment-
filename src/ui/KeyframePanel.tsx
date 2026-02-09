@@ -16,8 +16,8 @@ interface KeyframePanelProps {
   onAddKeyframe: () => void
   onPreset: (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => void
   onSetKeyframeTime: (id: string, time: number) => void
-  onToggleFrustum: () => void
-  showFrustum: boolean
+  smoothing: number
+  onSmoothingChange: (value: number) => void
   onClearKeyframes: () => void
   onDeleteKeyframe: (id: string) => void
   onMoveKeyframe: (id: string, dir: -1 | 1) => void
@@ -66,8 +66,8 @@ export function KeyframePanel({
   onAddKeyframe,
   onPreset,
   onSetKeyframeTime,
-  onToggleFrustum,
-  showFrustum,
+  smoothing,
+  onSmoothingChange,
   onClearKeyframes,
   onDeleteKeyframe,
   onMoveKeyframe,
@@ -121,15 +121,28 @@ export function KeyframePanel({
       </div>
 
       <div className="panel-row panel-row-tight">
-        <button className={`control-button control-button-sm ${showFrustum ? 'active' : ''}`} onClick={onToggleFrustum} title="Toggle frustum">
-          {showFrustum ? 'Frustum on' : 'Frustum off'}
-        </button>
         <div className="panel-presets">
           <button className="control-button control-button-sm" onClick={() => onPreset('turntable')} title="Turntable">Turntable</button>
           <button className="control-button control-button-sm" onClick={() => onPreset('dolly-in')} title="Dolly in">Dolly</button>
           <button className="control-button control-button-sm" onClick={() => onPreset('crane-up')} title="Crane up">Crane</button>
           <button className="control-button control-button-sm" onClick={() => onPreset('figure-8')} title="Figure 8">Figure-8</button>
         </div>
+      </div>
+
+      <div className="panel-row">
+        <label className="control-label" htmlFor="path-smoothing">
+          Smoothing
+        </label>
+        <input
+          id="path-smoothing"
+          className="control-range"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={smoothing}
+          onChange={(event) => onSmoothingChange(Number(event.target.value))}
+        />
       </div>
 
       {currentPose ? (

@@ -27,6 +27,7 @@ This starts the export server and the Vite dev server. Open the app URL (e.g. `h
 2. Add at least two keyframes (**Add** in the Keyframes panel) and optionally reorder or adjust times on the timeline.
 3. Use **Preview Play** to check the path.
 4. Click **Export MP4** in the Export panel. Defaults: 1280×720, 30 FPS. Progress is shown; when done, use the output link or open `exports/<id>/output.mp4` in VLC/QuickTime.
+5. Cancel stops encoding and deletes partial output so no corrupted files remain.
 
 ## MVP coverage
 

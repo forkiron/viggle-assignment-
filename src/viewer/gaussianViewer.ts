@@ -3,7 +3,7 @@
  * camera pose get/set, and renderToBlob for export.
  */
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d'
-import { CameraHelper, Vector3 } from 'three'
+import { Vector2, Vector3 } from 'three'
 import type { Camera, WebGLRenderer } from 'three'
 import { InputManager } from './controls/input'
 import { OrbitControlWrapper } from './controls/orbitControls'
@@ -39,8 +39,6 @@ export class GaussianViewer {
   private initialOrbitTarget?: Vector3
   private rafId = 0
   private lastFrameTime = 0
-  private frustumHelper?: CameraHelper
-  private showFrustum = true
 
   init(containerEl: HTMLElement) {
     if (this.viewer) return
@@ -207,10 +205,6 @@ export class GaussianViewer {
     if (this.viewer?.dispose) {
       this.viewer.dispose()
     }
-    if (this.frustumHelper && this.viewer?.threeScene) {
-      this.viewer.threeScene.remove(this.frustumHelper)
-    }
-    this.frustumHelper = undefined
     this.orbitControls?.dispose()
     this.input?.detach()
     this.viewer = null
@@ -266,12 +260,6 @@ export class GaussianViewer {
     return this.orbitControls?.getTarget() ?? null
   }
 
-  setFrustumVisible(visible: boolean) {
-    this.showFrustum = visible
-    if (this.frustumHelper) {
-      this.frustumHelper.visible = visible
-    }
-  }
 
   async renderToBlob(width: number, height: number): Promise<Blob> {
     const renderer = this.viewer?.renderer as WebGLRenderer | undefined
@@ -280,7 +268,7 @@ export class GaussianViewer {
     }
 
     const canvas = renderer.domElement as HTMLCanvasElement
-    const prevSize = renderer.getSize(new Vector3())
+    const prevSize = renderer.getSize(new Vector2())
     const prevPixelRatio = renderer.getPixelRatio()
 
     renderer.setPixelRatio(1)
@@ -404,12 +392,6 @@ export class GaussianViewer {
     const renderer = this.viewer?.renderer as WebGLRenderer | undefined
     if (!camera || !renderer || !this.container) return
 
-    if (this.viewer?.threeScene) {
-      this.frustumHelper = new CameraHelper(camera)
-      this.frustumHelper.visible = this.showFrustum
-      this.viewer.threeScene.add(this.frustumHelper)
-    }
-
     this.input = new InputManager()
     this.input.attach(this.container)
 
@@ -429,9 +411,6 @@ export class GaussianViewer {
       this.flyControls?.update(dt)
       if (this.controlMode === 'orbit') {
         this.orbitControls?.update()
-      }
-      if (this.frustumHelper) {
-        this.frustumHelper.update()
       }
       this.rafId = requestAnimationFrame(loop)
     }

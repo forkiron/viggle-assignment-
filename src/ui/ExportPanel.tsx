@@ -11,7 +11,7 @@ interface ExportPanelProps {
 export function ExportPanel({ isExporting, progress, status, onExport, onCancel, outputUrl }: ExportPanelProps) {
   return (
     <div className="export-panel">
-      <div className="panel-title">Export</div>
+      <label className="control-label">Export</label>
       <div className="export-status">{status}</div>
       <div className="export-bar">
         <div className="export-bar-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
@@ -26,7 +26,7 @@ export function ExportPanel({ isExporting, progress, status, onExport, onCancel,
       </div>
       {outputUrl ? (
         <div className="export-link">
-          Output: <code>{outputUrl}</code>
+          <code>{outputUrl}</code>
         </div>
       ) : null}
     </div>

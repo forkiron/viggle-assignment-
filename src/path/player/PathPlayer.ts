@@ -16,6 +16,7 @@ export class PathPlayer {
   private isPlaying = false
   private isPaused = false
   private loop = false
+  private smoothing = 0.7
 
   constructor(viewer: GaussianViewer) {
     this.viewer = viewer
@@ -31,6 +32,10 @@ export class PathPlayer {
 
   setLoop(loop: boolean) {
     this.loop = loop
+  }
+
+  setSmoothing(value: number) {
+    this.smoothing = Math.max(0, Math.min(1, value))
   }
 
   getDuration() {
@@ -74,7 +79,7 @@ export class PathPlayer {
 
   seek(time: number) {
     this.currentTime = Math.max(0, Math.min(this.duration, time))
-    const pose = samplePoseAtTime(this.keyframes, this.currentTime)
+    const pose = samplePoseAtTime(this.keyframes, this.currentTime, this.smoothing)
     if (pose) {
       this.viewer.setCameraPose(pose)
     }
@@ -107,7 +112,7 @@ export class PathPlayer {
       }
     }
 
-    const pose = samplePoseAtTime(this.keyframes, this.currentTime)
+    const pose = samplePoseAtTime(this.keyframes, this.currentTime, this.smoothing)
     if (pose) {
       this.viewer.setCameraPose(pose)
     }

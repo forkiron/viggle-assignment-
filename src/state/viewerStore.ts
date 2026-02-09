@@ -14,7 +14,7 @@ const DEFAULT_STATE: ViewerState = {
   controlMode: 'orbit',
   moveSpeed: 4,
   lookSensitivity: 0.002,
-  showFrustum: true,
+  smoothing: 0.7,
   error: undefined,
 }
 
@@ -70,8 +70,8 @@ export const setViewerLookSensitivity = (lookSensitivity: number) => {
   setViewerState({ lookSensitivity })
 }
 
-export const setShowFrustum = (showFrustum: boolean) => {
-  setViewerState({ showFrustum })
+export const setSmoothing = (smoothing: number) => {
+  setViewerState({ smoothing })
 }
 
 export const setViewerError = (error: string) => {
