@@ -1,5 +1,5 @@
 /** Right panel: navigation mode (orbit/fly), move speed, look sensitivity, scene preset/URL, Load, Frame Scene, Reset View, Export. */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ViewerStatus } from '../state/types'
 import type { SceneSource } from '../viewer/sceneSources'
 import type { ControlMode } from '../state/types'
@@ -75,6 +75,30 @@ export function ViewerControls({
     if (isPreviewing) return
     onControlModeChange(controlMode === 'orbit' ? 'fly' : 'orbit')
   }
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'f') return
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+      event.preventDefault()
+      handleModeToggle()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [controlMode, isPreviewing])
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'r') return
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+      event.preventDefault()
+      onResetView()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onResetView])
 
   return (
     <div className="viewer-controls">

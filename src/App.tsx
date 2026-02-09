@@ -141,18 +141,16 @@ function App() {
 
     const camPos = new Vector3(cameraPose.position[0], cameraPose.position[1], cameraPose.position[2])
     const orbitTarget = viewer.getOrbitTarget()
-    let target = orbitTarget ?? new Vector3(0, 0, 0)
-    const radius = Math.max(1, camPos.distanceTo(target))
-    if (!orbitTarget) {
-      const quat = new Quaternion(
-        cameraPose.quaternion[0],
-        cameraPose.quaternion[1],
-        cameraPose.quaternion[2],
-        cameraPose.quaternion[3],
-      )
-      const forward = new Vector3(0, 0, -1).applyQuaternion(quat).normalize()
-      target = camPos.clone().addScaledVector(forward, radius)
-    }
+    const orbitRadius = orbitTarget ? camPos.distanceTo(orbitTarget) : 0
+    const radius = Math.max(2, orbitRadius || 5)
+    const quat = new Quaternion(
+      cameraPose.quaternion[0],
+      cameraPose.quaternion[1],
+      cameraPose.quaternion[2],
+      cameraPose.quaternion[3],
+    )
+    const forward = new Vector3(0, 0, -1).applyQuaternion(quat).normalize()
+    const target = camPos.clone().addScaledVector(forward, radius)
     const height = camPos.y - target.y
     const options = { target, radius, height, fov: cameraPose.fov, duration: 8 }
 

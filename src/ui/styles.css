@@ -85,6 +85,56 @@ body,
   font-size: 12px;
 }
 
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 12, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 5;
+}
+
+.overlay-card {
+  position: relative;
+  width: min(420px, 92vw);
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.overlay-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.overlay-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.overlay-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
 .viewer-controls {
   position: absolute;
   right: 12px;
