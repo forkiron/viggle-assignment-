@@ -40,7 +40,8 @@ Deterministic export: each export saves `path.json` (scene URL, keyframes, rende
 
 ## Extras implemented
 
-- **Keyboard shortcuts:** F toggle orbit/fly, R reset view, E add keyframe, Enter preview play, ↑/↓ select keyframe.
+- **Timeline editor:** draggable keyframe times + scrubber (no crossing).
+- **Path smoothing:** adjustable smoothing strength + preview.
 - **Deterministic export:** path.json + render settings ensure repeatable outputs.
 
 ## Project structure
