@@ -287,22 +287,10 @@ body,
   gap: 6px;
 }
 
-.panel-row-tight .panel-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
 .control-button-sm {
   padding: 5px 8px;
   font-size: 11px;
   border-radius: 6px;
-}
-
-.panel-presets {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
 }
 
 .panel-empty {

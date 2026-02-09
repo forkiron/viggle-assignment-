@@ -27,8 +27,6 @@ import {
 import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
 import { samplePoseAtTime } from './path/player/sampler'
-import { generateCraneUp, generateDollyIn, generateFigure8, generateTurntable } from './path/presets'
-import { Quaternion, Vector3 } from 'three'
 import {
   addKeyframe,
   deleteKeyframe,
@@ -41,7 +39,6 @@ import {
   setLoop,
   clearPreviewError,
   setSelected,
-  setKeyframes,
   clearKeyframes,
   setKeyframeTime,
   usePathStore,
@@ -122,7 +119,7 @@ function App() {
     }
   }
 
-  // --- Keyframes & presets ---
+  // --- Keyframes ---
   const handleAddKeyframe = () => {
     const pose = viewer.getCameraPose()
     if (!pose) {
@@ -130,50 +127,6 @@ function App() {
       return
     }
     addKeyframe(pose)
-  }
-
-  const handlePreset = (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => {
-    const cameraPose = viewer.getCameraPose()
-    if (!cameraPose) {
-      setPreviewError('Camera pose unavailable.')
-      return
-    }
-
-    const camPos = new Vector3(cameraPose.position[0], cameraPose.position[1], cameraPose.position[2])
-    const orbitTarget = viewer.getOrbitTarget()
-    const orbitRadius = orbitTarget ? camPos.distanceTo(orbitTarget) : 0
-    const radius = Math.max(2, orbitRadius || 5)
-    const quat = new Quaternion(
-      cameraPose.quaternion[0],
-      cameraPose.quaternion[1],
-      cameraPose.quaternion[2],
-      cameraPose.quaternion[3],
-    )
-    const forward = new Vector3(0, 0, -1).applyQuaternion(quat).normalize()
-    const target = camPos.clone().addScaledVector(forward, radius)
-    const height = camPos.y - target.y
-    const options = { target, radius, height, fov: cameraPose.fov, duration: 8 }
-
-    let frames
-    switch (preset) {
-      case 'turntable':
-        frames = generateTurntable(options)
-        break
-      case 'dolly-in':
-        frames = generateDollyIn(options)
-        break
-      case 'crane-up':
-        frames = generateCraneUp(options)
-        break
-      case 'figure-8':
-        frames = generateFigure8(options)
-        break
-      default:
-        return
-    }
-
-    setKeyframes(frames)
-    clearPreviewError()
   }
 
   const handleSetKeyframeTime = (id: string, time: number) => {
@@ -351,7 +304,6 @@ function App() {
         loop={loop}
         previewError={previewError}
         onAddKeyframe={handleAddKeyframe}
-        onPreset={handlePreset}
         onSetKeyframeTime={handleSetKeyframeTime}
         smoothing={smoothing}
         onSmoothingChange={(value) => setSmoothing(value)}

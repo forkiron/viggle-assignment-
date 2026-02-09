@@ -14,7 +14,6 @@ interface KeyframePanelProps {
   loop: boolean
   previewError?: string
   onAddKeyframe: () => void
-  onPreset: (preset: 'turntable' | 'dolly-in' | 'crane-up' | 'figure-8') => void
   onSetKeyframeTime: (id: string, time: number) => void
   smoothing: number
   onSmoothingChange: (value: number) => void
@@ -64,7 +63,6 @@ export function KeyframePanel({
   loop,
   previewError,
   onAddKeyframe,
-  onPreset,
   onSetKeyframeTime,
   smoothing,
   onSmoothingChange,
@@ -82,17 +80,21 @@ export function KeyframePanel({
 }: KeyframePanelProps) {
   const timelineRef = useRef<HTMLDivElement>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
-  const [draggingIsRightmost, setDraggingIsRightmost] = useState(false)
-
   const updateFromPointer = (clientX: number) => {
     if (!timelineRef.current || !draggingId) return
     const rect = timelineRef.current.getBoundingClientRect()
     const baseDuration = Math.max(duration, 0.1)
     const rawRatio = (clientX - rect.left) / rect.width
-    const maxRatio = draggingIsRightmost ? 3 : 1
-    const ratio = Math.max(0, Math.min(maxRatio, rawRatio))
+    const ratio = Math.max(0, Math.min(1, rawRatio))
     const nextTime = ratio * baseDuration
-    onSetKeyframeTime(draggingId, Math.max(0, nextTime))
+    const index = keyframes.findIndex((frame) => frame.id === draggingId)
+    if (index === -1) return
+    const prev = keyframes[index - 1]
+    const next = keyframes[index + 1]
+    const minTime = prev ? prev.t + 0.01 : 0
+    const maxTime = next ? next.t - 0.01 : baseDuration
+    const clamped = Math.max(minTime, Math.min(maxTime, nextTime))
+    onSetKeyframeTime(draggingId, clamped)
   }
 
   useEffect(() => {
@@ -165,15 +167,6 @@ export function KeyframePanel({
         </div>
       </div>
 
-      <div className="panel-row panel-row-tight">
-        <div className="panel-presets">
-          <button className="control-button control-button-sm" onClick={() => onPreset('turntable')} title="Turntable">Turntable</button>
-          <button className="control-button control-button-sm" onClick={() => onPreset('dolly-in')} title="Dolly in">Dolly</button>
-          <button className="control-button control-button-sm" onClick={() => onPreset('crane-up')} title="Crane up">Crane</button>
-          <button className="control-button control-button-sm" onClick={() => onPreset('figure-8')} title="Figure 8">Figure-8</button>
-        </div>
-      </div>
-
       <div className="panel-row">
         <label className="control-label" htmlFor="path-smoothing">
           Smoothing
@@ -206,13 +199,12 @@ export function KeyframePanel({
                   key={frame.id}
                   className={`timeline-dot ${frame.id === selectedId ? 'selected' : ''}`}
                   style={{ left: `${left}%` }}
-                  onPointerDown={(event) => {
-                    event.preventDefault()
-                    setDraggingId(frame.id)
-                    setDraggingIsRightmost(frame.id === keyframes[keyframes.length - 1]?.id)
-                    updateFromPointer(event.clientX)
-                  }}
-                />
+                    onPointerDown={(event) => {
+                      event.preventDefault()
+                      setDraggingId(frame.id)
+                      updateFromPointer(event.clientX)
+                    }}
+                  />
               )
             })}
           </div>

@@ -97,14 +97,6 @@ export const setSelected = (id: string | null) => {
   setState({ selectedId: id })
 }
 
-export const setKeyframes = (keyframes: Keyframe[]) => {
-  const sorted = [...keyframes].sort((a, b) => a.t - b.t)
-  setState({
-    keyframes: sorted,
-    selectedId: sorted[0]?.id ?? null,
-  })
-}
-
 export const clearKeyframes = () => {
   setState({
     keyframes: [],

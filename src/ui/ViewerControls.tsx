@@ -104,7 +104,7 @@ export function ViewerControls({
     <div className="viewer-controls">
       <label className="control-label">Navigation Mode</label>
       <button className="control-button" onClick={handleModeToggle} disabled={isPreviewing}>
-        {controlMode === 'orbit' ? 'Orbit Mode' : 'Walk/Fly Mode'}
+        {controlMode === 'orbit' ? 'Orbit Mode' : 'Fly Mode'}
       </button>
       {controlMode === 'fly' ? (
         <div className="control-hint">Click canvas to capture mouse. WASD to move, ESC to release.</div>
