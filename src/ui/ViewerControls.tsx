@@ -90,6 +90,7 @@ export function ViewerControls({
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) return
       if (event.key.toLowerCase() !== 'r') return
       const target = event.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return

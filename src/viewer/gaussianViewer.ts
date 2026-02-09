@@ -140,7 +140,11 @@ export class GaussianViewer {
 
     if (camera && bounds) {
       const distance = bounds.radius * 2.5
-      camera.position?.set(bounds.center.x, bounds.center.y, bounds.center.z + distance)
+      const currentPos = camera.position?.clone?.() ?? new Vector3(0, 0, 1)
+      const center = new Vector3(bounds.center.x, bounds.center.y, bounds.center.z)
+      const direction = currentPos.sub(center).normalize()
+      const offset = direction.multiplyScalar(distance)
+      camera.position?.set(center.x + offset.x, center.y + offset.y, center.z + offset.z)
       if (typeof camera.lookAt === 'function') {
         camera.lookAt(bounds.center.x, bounds.center.y, bounds.center.z)
       }
