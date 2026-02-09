@@ -36,7 +36,8 @@ export const samplePoseAtTime = (
   const k2 = sorted[segmentIndex + 1]
   const denom = k2.t - k1.t
   const u = denom > 0 ? (clampedT - k1.t) / denom : 0
-  const eased = easeInOutCubic(u)
+  const easeWeight = Math.max(0, Math.min(1, smoothingStrength))
+  const eased = lerp(u, easeInOutCubic(u), easeWeight)
 
   const p1 = k1.pose.position
   const p2 = k2.pose.position

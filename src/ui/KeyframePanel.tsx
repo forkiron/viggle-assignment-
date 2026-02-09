@@ -109,7 +109,8 @@ export function KeyframePanel({
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'e') return
+      const key = event.key.toLowerCase()
+      if (key !== 'e') return
       const target = event.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
       event.preventDefault()
@@ -118,6 +119,35 @@ export function KeyframePanel({
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onAddKeyframe])
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        onPreviewPlay()
+        return
+      }
+
+      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+      event.preventDefault()
+
+      if (keyframes.length === 0) return
+      const currentIndex = selectedId
+        ? keyframes.findIndex((frame) => frame.id === selectedId)
+        : 0
+      const nextIndex =
+        event.key === 'ArrowUp'
+          ? Math.max(0, currentIndex - 1)
+          : Math.min(keyframes.length - 1, currentIndex + 1)
+      const next = keyframes[nextIndex]
+      if (next) onSelectKeyframe(next.id)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [keyframes, selectedId, onPreviewPlay, onSelectKeyframe])
   return (
     <div className="keyframe-panel">
       <div className="panel-header">
