@@ -3,7 +3,7 @@
  * camera pose get/set, and renderToBlob for export.
  */
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d'
-import { Vector2, Vector3 } from 'three'
+import { Vector2, Vector3, WebGLRenderTarget } from 'three'
 import type { Camera, WebGLRenderer } from 'three'
 import { InputManager } from './controls/input'
 import { OrbitControlWrapper } from './controls/orbitControls'
@@ -39,6 +39,11 @@ export class GaussianViewer {
   private initialOrbitTarget?: Vector3
   private rafId = 0
   private lastFrameTime = 0
+
+  /* ---- Off-screen export resources (reused across frames) ---- */
+  private exportTarget: WebGLRenderTarget | null = null
+  private exportPixelBuf: Uint8Array | null = null
+  private exportCanvas: OffscreenCanvas | null = null
 
   init(containerEl: HTMLElement) {
     if (this.viewer) return
@@ -299,6 +304,131 @@ export class GaussianViewer {
     renderer.setSize(prevSize.x, prevSize.y, false)
 
     return blob
+  }
+
+  /**
+   * Render a single frame off-screen to a WebGLRenderTarget and return a PNG Blob.
+   *
+   * IMPORTANT: We must call `renderer.setSize()` before rendering so that the
+   * GaussianSplats3D splat shader uses the correct viewport dimensions for
+   * projecting 3D gaussians → 2D screen-space.  Without this the shader projects
+   * splats using the *main canvas* dimensions, causing most splats to fall outside
+   * the render-target bounds (the "half-empty frame" bug).
+   *
+   * The canvas buffer is briefly resized (CSS style is untouched), which clears
+   * its content.  The library's self-driven render loop will repaint it on the
+   * next rAF — at most one frame of blank.
+   */
+  async renderFrameOffscreen(width: number, height: number, pose: CameraPose): Promise<Blob> {
+    const renderer = this.viewer?.renderer as WebGLRenderer | undefined
+    if (!renderer) throw new Error('Renderer unavailable')
+
+    const camera = this.viewer?.camera
+    if (!camera) throw new Error('Camera unavailable')
+
+    // --- Lazy-init / resize export resources ---
+    if (
+      !this.exportTarget ||
+      this.exportTarget.width !== width ||
+      this.exportTarget.height !== height
+    ) {
+      this.exportTarget?.dispose()
+      this.exportTarget = new WebGLRenderTarget(width, height)
+      this.exportPixelBuf = new Uint8Array(width * height * 4)
+      this.exportCanvas = new OffscreenCanvas(width, height)
+    }
+
+    // --- Save current state ---
+    const savedPos = camera.position.clone()
+    const savedQuat = camera.quaternion.clone()
+    const savedFov: number | undefined = 'fov' in camera ? (camera as any).fov : undefined
+    const savedAspect: number | undefined = 'aspect' in camera ? (camera as any).aspect : undefined
+    const prevSize = renderer.getSize(new Vector2())
+    const prevPixelRatio = renderer.getPixelRatio()
+
+    // --- Set renderer to export dimensions (critical for correct splat projection) ---
+    renderer.setPixelRatio(1)
+    renderer.setSize(width, height, false) // false → CSS style untouched
+
+    // --- Apply export pose ---
+    camera.position.set(pose.position[0], pose.position[1], pose.position[2])
+    camera.quaternion.set(
+      pose.quaternion[0],
+      pose.quaternion[1],
+      pose.quaternion[2],
+      pose.quaternion[3],
+    )
+    if ('fov' in camera && typeof pose.fov === 'number') {
+      ;(camera as any).fov = pose.fov
+    }
+    if ('aspect' in camera) {
+      ;(camera as any).aspect = width / height
+    }
+    if (typeof camera.updateProjectionMatrix === 'function') {
+      ;(camera as any).updateProjectionMatrix()
+    }
+
+    // --- Render to off-screen target ---
+    const prevTarget = renderer.getRenderTarget()
+    renderer.setRenderTarget(this.exportTarget)
+
+    if (typeof this.viewer?.forceRenderNextFrame === 'function') {
+      this.viewer.forceRenderNextFrame()
+    }
+    if (typeof this.viewer?.render === 'function') {
+      this.viewer.render()
+    }
+
+    // --- Read pixels from GPU ---
+    renderer.readRenderTargetPixels(
+      this.exportTarget,
+      0,
+      0,
+      width,
+      height,
+      this.exportPixelBuf!,
+    )
+
+    // --- Restore renderer & camera ---
+    renderer.setRenderTarget(prevTarget)
+    renderer.setPixelRatio(prevPixelRatio)
+    renderer.setSize(prevSize.x, prevSize.y, false)
+
+    camera.position.copy(savedPos)
+    camera.quaternion.copy(savedQuat)
+    if ('fov' in camera && savedFov !== undefined) {
+      ;(camera as any).fov = savedFov
+    }
+    if ('aspect' in camera && savedAspect !== undefined) {
+      ;(camera as any).aspect = savedAspect
+    }
+    if (typeof camera.updateProjectionMatrix === 'function') {
+      ;(camera as any).updateProjectionMatrix()
+    }
+
+    // --- Convert pixels → PNG Blob ---
+    // WebGL returns pixels bottom-to-top; flip vertically for correct orientation.
+    const rowSize = width * 4
+    const src = this.exportPixelBuf!
+    const flipped = new Uint8ClampedArray(width * height * 4)
+    for (let y = 0; y < height; y++) {
+      const srcOff = y * rowSize
+      const dstOff = (height - 1 - y) * rowSize
+      flipped.set(src.subarray(srcOff, srcOff + rowSize), dstOff)
+    }
+
+    const imageData = new ImageData(flipped, width, height)
+    const ctx = this.exportCanvas!.getContext('2d')!
+    ctx.putImageData(imageData, 0, 0)
+    return this.exportCanvas!.convertToBlob({ type: 'image/png' })
+  }
+
+  /** Free GPU + CPU resources used by off-screen export rendering. */
+  disposeExportResources() {
+    this.exportTarget?.dispose()
+    this.exportTarget = null
+    this.exportPixelBuf = null
+    this.exportCanvas = null
   }
 
   getCameraPose(): CameraPose | null {

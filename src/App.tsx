@@ -26,7 +26,8 @@ import {
 } from './state/viewerStore'
 import { createFpsTracker } from './viewer/metrics'
 import { isValidPlyUrl, normalizeSceneUrl, scenePresets } from './viewer/sceneSources'
-import { samplePoseAtTime } from './path/player/sampler'
+import { ExportPipeline } from './export/ExportPipeline'
+import type { ExportSettings } from './export/ExportPipeline'
 import {
   addKeyframe,
   deleteKeyframe,
@@ -59,8 +60,8 @@ function App() {
   const [exportProgress, setExportProgress] = useState(0)
   const [exportStatus, setExportStatus] = useState('Idle')
   const [exportOutputUrl, setExportOutputUrl] = useState<string | undefined>(undefined)
-  const exportCancelRef = useRef(false)
-  const [lastExportSettings, setLastExportSettings] = useState<any | null>(null)
+  const pipelineRef = useRef<ExportPipeline | null>(null)
+  const [lastExportSettings, setLastExportSettings] = useState<ExportSettings | null>(null)
 
   // --- Sync path duration; FPS; control mode / speed / sensitivity / frustum ---
   useEffect(() => {
@@ -166,71 +167,30 @@ function App() {
     setPaused(false)
   }
 
-  // --- Export MP4 (render frames client-side, server encodes via FFmpeg) ---
-  const runExport = async (settings: any) => {
-    exportCancelRef.current = false
+  // --- Export MP4 (off-screen rendering — viewer stays fully interactive) ---
+  const runExport = async (settings: ExportSettings) => {
+    const pipeline = new ExportPipeline(EXPORT_SERVER_URL)
+    pipelineRef.current = pipeline
+
     setIsExporting(true)
     setExportProgress(0)
     setExportOutputUrl(undefined)
     setExportStatus('Starting export…')
-    viewer.setControlsEnabled(false)
+    // NOTE: controls are NOT disabled — user keeps full interactivity
 
     try {
-      const startRes = await fetch(`${EXPORT_SERVER_URL}/export/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+      const outputUrl = await pipeline.run(viewer, settings, (frame, total, status) => {
+        setExportProgress(frame / total)
+        setExportStatus(status)
       })
-      if (!startRes.ok) throw new Error('Failed to start export')
-      const { id } = await startRes.json()
-
-      const { keyframes: exportKeyframes, render } = settings
-      const frameCount = render.frameCount
-      const startT = exportKeyframes[0].t
-
-      for (let frame = 0; frame < frameCount; frame += 1) {
-        if (exportCancelRef.current) {
-          await fetch(`${EXPORT_SERVER_URL}/export/${id}/cancel`, { method: 'POST' })
-          setExportStatus('Export cancelled.')
-          setIsExporting(false)
-          viewer.setControlsEnabled(true)
-          return
-        }
-
-        const t = startT + frame / render.fps
-        const pose = samplePoseAtTime(exportKeyframes, t, render.smoothing ?? smoothing)
-        if (!pose) continue
-
-        viewer.setCameraPose(pose)
-        const blob = await viewer.renderToBlob(render.width, render.height)
-
-        const form = new FormData()
-        form.append('index', String(frame))
-        form.append('frame', blob, `frame_${String(frame).padStart(6, '0')}.png`)
-
-        const frameRes = await fetch(`${EXPORT_SERVER_URL}/export/${id}/frame`, {
-          method: 'POST',
-          body: form,
-        })
-        if (!frameRes.ok) throw new Error('Failed to upload frame')
-
-        setExportProgress((frame + 1) / frameCount)
-        setExportStatus(`Rendering frames: ${frame + 1}/${frameCount}`)
-      }
-
-      setExportStatus('Encoding video…')
-      const finishRes = await fetch(`${EXPORT_SERVER_URL}/export/${id}/finish`, { method: 'POST' })
-      if (!finishRes.ok) throw new Error('Failed to start encoding')
-      const { output } = await finishRes.json()
-
-      setExportOutputUrl(`${EXPORT_SERVER_URL}${output}`)
+      setExportOutputUrl(outputUrl)
       setExportStatus('Export complete.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Export failed.'
       setExportStatus(message)
     } finally {
       setIsExporting(false)
-      viewer.setControlsEnabled(true)
+      pipelineRef.current = null
     }
   }
 
@@ -247,9 +207,9 @@ function App() {
     }
 
     const frameCount = Math.ceil(totalDuration * DEFAULT_EXPORT.fps)
-    const settings = {
+    const settings: ExportSettings = {
       version: 1,
-      sceneUrl,
+      sceneUrl: sceneUrl || '',
       keyframes,
       render: { ...DEFAULT_EXPORT, duration: totalDuration, frameCount, smoothing },
     }
@@ -265,7 +225,7 @@ function App() {
 
   const handleCancelExport = () => {
     if (!isExporting) return
-    exportCancelRef.current = true
+    pipelineRef.current?.cancel()
     setExportStatus('Cancelling…')
     setExportOutputUrl(undefined)
   }
