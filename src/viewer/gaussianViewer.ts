@@ -39,6 +39,7 @@ export class GaussianViewer {
   private initialOrbitTarget?: Vector3
   private rafId = 0
   private lastFrameTime = 0
+  private controlsPaused = false
 
   /* ---- Off-screen export resources (reused across frames) ---- */
   private exportTarget: WebGLRenderTarget | null = null
@@ -344,12 +345,18 @@ export class GaussianViewer {
     }
 
     // --- Save current state ---
+    const viewerAny = this.viewer as any
+    const wasSelfDrivenRunning = Boolean(viewerAny?.selfDrivenModeRunning)
     const savedPos = camera.position.clone()
     const savedQuat = camera.quaternion.clone()
     const savedFov: number | undefined = 'fov' in camera ? (camera as any).fov : undefined
     const savedAspect: number | undefined = 'aspect' in camera ? (camera as any).aspect : undefined
     const prevSize = renderer.getSize(new Vector2())
     const prevPixelRatio = renderer.getPixelRatio()
+    if (wasSelfDrivenRunning && typeof viewerAny?.stop === 'function') {
+      viewerAny.stop()
+    }
+    this.controlsPaused = true
 
     // --- Set renderer to export dimensions (critical for correct splat projection) ---
     renderer.setPixelRatio(1)
@@ -375,7 +382,6 @@ export class GaussianViewer {
     camera.updateMatrixWorld?.(true)
 
     // Ensure internal splat sort + culling uses the updated camera pose.
-    const viewerAny = this.viewer as any
     const originalGather = typeof viewerAny?.gatherSceneNodesForSort === 'function'
       ? viewerAny.gatherSceneNodesForSort
       : null
@@ -390,6 +396,9 @@ export class GaussianViewer {
       }
       if (typeof viewerAny?.runSplatSort === 'function') {
         await viewerAny.runSplatSort(true, true)
+      }
+      if (viewerAny?.sortPromise) {
+        await viewerAny.sortPromise
       }
     } finally {
       if (originalGather) {
@@ -451,6 +460,10 @@ export class GaussianViewer {
       ;(camera as any).updateProjectionMatrix()
     }
     camera.updateMatrixWorld?.(true)
+    this.controlsPaused = false
+    if (wasSelfDrivenRunning && typeof viewerAny?.start === 'function') {
+      viewerAny.start()
+    }
 
     // --- Convert pixels → PNG Blob ---
     // WebGL returns pixels bottom-to-top; flip vertically for correct orientation.
@@ -588,9 +601,11 @@ export class GaussianViewer {
     const loop = (time: number) => {
       const dt = Math.min(0.05, (time - this.lastFrameTime) / 1000)
       this.lastFrameTime = time
-      this.flyControls?.update(dt)
-      if (this.controlMode === 'orbit') {
-        this.orbitControls?.update()
+      if (!this.controlsPaused) {
+        this.flyControls?.update(dt)
+        if (this.controlMode === 'orbit') {
+          this.orbitControls?.update()
+        }
       }
       this.rafId = requestAnimationFrame(loop)
     }
