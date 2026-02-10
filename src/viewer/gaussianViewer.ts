@@ -319,7 +319,12 @@ export class GaussianViewer {
    * its content.  The library's self-driven render loop will repaint it on the
    * next rAF — at most one frame of blank.
    */
-  async renderFrameOffscreen(width: number, height: number, pose: CameraPose): Promise<Blob> {
+  async renderFrameOffscreen(
+    width: number,
+    height: number,
+    pose: CameraPose,
+    debug?: { frame?: number },
+  ): Promise<Blob> {
     const renderer = this.viewer?.renderer as WebGLRenderer | undefined
     if (!renderer) throw new Error('Renderer unavailable')
 
@@ -367,6 +372,46 @@ export class GaussianViewer {
     if (typeof camera.updateProjectionMatrix === 'function') {
       ;(camera as any).updateProjectionMatrix()
     }
+    camera.updateMatrixWorld?.(true)
+
+    // Ensure internal splat sort + culling uses the updated camera pose.
+    const viewerAny = this.viewer as any
+    const originalGather = typeof viewerAny?.gatherSceneNodesForSort === 'function'
+      ? viewerAny.gatherSceneNodesForSort
+      : null
+    if (originalGather) {
+      viewerAny.gatherSceneNodesForSort = function (_gatherAllNodes?: boolean) {
+        return originalGather.call(this, true)
+      }
+    }
+    try {
+      if (typeof viewerAny?.update === 'function') {
+        viewerAny.update()
+      }
+      if (typeof viewerAny?.runSplatSort === 'function') {
+        await viewerAny.runSplatSort(true, true)
+      }
+    } finally {
+      if (originalGather) {
+        viewerAny.gatherSceneNodesForSort = originalGather
+      }
+    }
+    if (debug) {
+      const frame = debug.frame ?? -1
+      const total =
+        (this.viewer?.splatMesh?.getSplatCount?.() as number | undefined) ??
+        this.getPointCount() ??
+        0
+      const renderCount = Number((this.viewer as any)?.splatRenderCount ?? 0)
+      if (frame <= 0 || frame % 10 === 0) {
+        console.info('[ExportDebug] splatRenderCount', {
+          frame,
+          renderCount,
+          total,
+          ratio: total > 0 ? renderCount / total : 0,
+        })
+      }
+    }
 
     // --- Render to off-screen target ---
     const prevTarget = renderer.getRenderTarget()
@@ -405,6 +450,7 @@ export class GaussianViewer {
     if (typeof camera.updateProjectionMatrix === 'function') {
       ;(camera as any).updateProjectionMatrix()
     }
+    camera.updateMatrixWorld?.(true)
 
     // --- Convert pixels → PNG Blob ---
     // WebGL returns pixels bottom-to-top; flip vertically for correct orientation.

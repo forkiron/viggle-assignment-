@@ -121,7 +121,7 @@ export class ExportPipeline {
         if (!pose) continue
 
         /* ---- Render frame off-screen (no visible side-effects) ---- */
-        const blob = await viewer.renderFrameOffscreen(width, height, pose)
+        const blob = await viewer.renderFrameOffscreen(width, height, pose, { frame })
 
         /* ---- Start uploading (pipelined — don't await yet) ---- */
         const form = new FormData()
