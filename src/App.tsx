@@ -51,6 +51,7 @@ const DEFAULT_EXPORT = { width: 1280, height: 720, fps: 30 }
 
 function App() {
   const viewer = useMemo(() => new GaussianViewer(), [])
+  const exportViewer = useMemo(() => new GaussianViewer(), [])
   const { status, progress, fps, pointCount, sceneUrl, error, controlMode, moveSpeed, lookSensitivity, smoothing } =
     useViewerStore((state) => state)
   const { keyframes, selectedId, isPreviewing, isPaused, currentTime, duration, loop, previewError } =
@@ -62,6 +63,8 @@ function App() {
   const [exportOutputUrl, setExportOutputUrl] = useState<string | undefined>(undefined)
   const pipelineRef = useRef<ExportPipeline | null>(null)
   const [lastExportSettings, setLastExportSettings] = useState<ExportSettings | null>(null)
+  const exportContainerRef = useRef<HTMLDivElement>(null)
+  const [exportViewerReady, setExportViewerReady] = useState(false)
 
   // --- Sync path duration; FPS; control mode / speed / sensitivity / frustum ---
   useEffect(() => {
@@ -90,6 +93,23 @@ function App() {
   useEffect(() => {
     playerRef.setSmoothing(smoothing)
   }, [smoothing, playerRef])
+
+  useEffect(() => {
+    const container = exportContainerRef.current
+    if (!container) return
+    try {
+      exportViewer.init(container)
+      exportViewer.setControlsEnabled(false)
+      setExportViewerReady(true)
+    } catch (error) {
+      console.warn('[ExportViewer] init failed', error)
+    }
+
+    return () => {
+      setExportViewerReady(false)
+      exportViewer.dispose()
+    }
+  }, [exportViewer])
 
   // --- Scene load ---
   const handleLoad = async (nextUrl: string) => {
@@ -179,7 +199,17 @@ function App() {
     // NOTE: controls are NOT disabled — user keeps full interactivity
 
     try {
-      const outputUrl = await pipeline.run(viewer, settings, (frame, total, status) => {
+      if (!exportViewerReady) {
+        throw new Error('Export viewer not initialized')
+      }
+      if (!settings.sceneUrl) {
+        throw new Error('Scene URL missing for export')
+      }
+      setExportStatus('Preparing export renderer…')
+      await exportViewer.loadScene(settings.sceneUrl, undefined, { progressiveLoad: false })
+      await exportViewer.waitForRenderReady({ timeoutMs: 5000, warmupFrames: 16 })
+
+      const outputUrl = await pipeline.run(exportViewer, settings, (frame, total, status) => {
         setExportProgress(frame / total)
         setExportStatus(status)
       })
@@ -266,6 +296,18 @@ function App() {
   return (
     <div className="app-shell">
       <SplatViewer viewer={viewer} />
+      <div
+        ref={exportContainerRef}
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: -99999,
+          top: -99999,
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+        }}
+      />
       <ViewerHUD status={status} progress={progress} fps={fps} pointCount={pointCount} error={error} />
       <KeyframePanel
         keyframes={keyframes}

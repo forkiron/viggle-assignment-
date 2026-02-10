@@ -111,6 +111,7 @@ export function KeyframePanel({
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (!event.key) return
       const key = event.key.toLowerCase()
       if (key !== 'e') return
       const target = event.target as HTMLElement | null
@@ -124,6 +125,7 @@ export function KeyframePanel({
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (!event.key) return
       const target = event.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
 

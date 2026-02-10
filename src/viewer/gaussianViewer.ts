@@ -270,6 +270,48 @@ export class GaussianViewer {
     return this.orbitControls?.getTarget() ?? null
   }
 
+  async waitForRenderReady(options?: { timeoutMs?: number; warmupFrames?: number }) {
+    if (!this.viewer) return
+    const timeoutMs = options?.timeoutMs ?? 5000
+    const warmupFrames = options?.warmupFrames ?? 12
+    const start = performance.now()
+    let lastCount: number | null = null
+    let stableCount = 0
+
+    while (performance.now() - start < timeoutMs) {
+      this.renderOnce()
+      const count = this.getPointCount()
+      if (typeof count === 'number' && count > 0) {
+        if (count === lastCount) {
+          stableCount += 1
+        } else {
+          stableCount = 0
+          lastCount = count
+        }
+        if (stableCount >= 2) break
+      }
+      await this.nextFrame()
+    }
+
+    for (let i = 0; i < warmupFrames; i += 1) {
+      this.renderOnce()
+      await this.nextFrame()
+    }
+  }
+
+  private renderOnce() {
+    if (!this.viewer) return
+    if (typeof (this.viewer as any)?.update === 'function') {
+      ;(this.viewer as any).update()
+    }
+    if (typeof this.viewer?.forceRenderNextFrame === 'function') {
+      this.viewer.forceRenderNextFrame()
+    }
+    if (typeof this.viewer?.render === 'function') {
+      this.viewer.render()
+    }
+  }
+
 
   async renderToBlob(width: number, height: number): Promise<Blob> {
     const renderer = this.viewer?.renderer as WebGLRenderer | undefined
@@ -645,5 +687,9 @@ export class GaussianViewer {
       return new Vector3(lookAt.x, lookAt.y, lookAt.z)
     }
     return null
+  }
+
+  private nextFrame() {
+    return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
   }
 }
