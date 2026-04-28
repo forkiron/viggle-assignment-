@@ -1,4 +1,4 @@
-/** Right panel: navigation mode (orbit/fly), move speed, look sensitivity, scene preset/URL, Load, Frame Scene, Reset View, Export. */
+/** Scene URL, orbit/fly, speeds, export. */
 import { useEffect, useMemo, useState } from 'react'
 import type { ViewerStatus } from '../state/types'
 import type { SceneSource } from '../viewer/sceneSources'
@@ -20,7 +20,6 @@ interface ViewerControlsProps {
   onControlModeChange: (mode: ControlMode) => void
   onMoveSpeedChange: (value: number) => void
   onLookSensitivityChange: (value: number) => void
-  // Export props
   isExporting: boolean
   exportProgress: number
   exportStatus: string

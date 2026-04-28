@@ -1,4 +1,4 @@
-/** Keyframes panel: add/clear, presets, timeline with draggable keyframes, per-shot reorder/delete, preview play/stop, seek. */
+/** Keyframe list, timeline, preview. */
 import type { CameraPose, Keyframe } from '../path/types'
 import type { ControlMode } from '../state/types'
 import { PlaybackControls } from './PlaybackControls'

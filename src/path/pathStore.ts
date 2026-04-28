@@ -1,7 +1,4 @@
-/**
- * External store for camera path state: keyframes list, selection, preview state,
- * duration, loop. Used by KeyframePanel and App for add/delete/reorder/time/play.
- */
+/** Keyframes, preview, timeline (sync external store for React). */
 import { useSyncExternalStore } from 'react'
 import type { CameraPose, Keyframe } from './types'
 

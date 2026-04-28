@@ -1,4 +1,4 @@
-/** HUD: status, loading progress %, FPS, point count, error. */
+/** Status bar: load %, FPS, splat count, errors. */
 import type { ViewerStatus } from '../state/types'
 import { useState } from 'react'
 

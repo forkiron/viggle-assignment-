@@ -1,7 +1,4 @@
-/**
- * Wraps GaussianSplats3D Viewer: init, load .ply, frame/reset view, orbit/fly controls,
- * camera pose get/set, and renderToBlob for export.
- */
+/** GaussianSplats3D wrapper: load .ply, orbit/fly, poses, PNG export via off-screen render target. */
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d'
 import { Vector2, Vector3, WebGLRenderTarget } from 'three'
 import type { Camera, WebGLRenderer } from 'three'
@@ -349,19 +346,7 @@ export class GaussianViewer {
     return blob
   }
 
-  /**
-   * Render a single frame off-screen to a WebGLRenderTarget and return a PNG Blob.
-   *
-   * IMPORTANT: We must call `renderer.setSize()` before rendering so that the
-   * GaussianSplats3D splat shader uses the correct viewport dimensions for
-   * projecting 3D gaussians → 2D screen-space.  Without this the shader projects
-   * splats using the *main canvas* dimensions, causing most splats to fall outside
-   * the render-target bounds (the "half-empty frame" bug).
-   *
-   * The canvas buffer is briefly resized (CSS style is untouched), which clears
-   * its content.  The library's self-driven render loop will repaint it on the
-   * next rAF — at most one frame of blank.
-   */
+  /** One PNG frame: set renderer size first so splats project to w×h; on-screen may flash one frame. */
   async renderFrameOffscreen(
     width: number,
     height: number,
@@ -374,7 +359,7 @@ export class GaussianViewer {
     const camera = this.viewer?.camera
     if (!camera) throw new Error('Camera unavailable')
 
-    // --- Lazy-init / resize export resources ---
+    // RT + pixel buf for this resolution
     if (
       !this.exportTarget ||
       this.exportTarget.width !== width ||
@@ -386,7 +371,7 @@ export class GaussianViewer {
       this.exportCanvas = new OffscreenCanvas(width, height)
     }
 
-    // --- Save current state ---
+    // Snapshot cam + renderer before export pose
     const viewerAny = this.viewer as any
     const wasSelfDrivenRunning = Boolean(viewerAny?.selfDrivenModeRunning)
     const savedPos = camera.position.clone()
@@ -400,11 +385,10 @@ export class GaussianViewer {
     }
     this.controlsPaused = true
 
-    // --- Set renderer to export dimensions (critical for correct splat projection) ---
+    // Renderer size drives splat shader; must match target
     renderer.setPixelRatio(1)
     renderer.setSize(width, height, false) // false → CSS style untouched
 
-    // --- Apply export pose ---
     camera.position.set(pose.position[0], pose.position[1], pose.position[2])
     camera.quaternion.set(
       pose.quaternion[0],
@@ -423,7 +407,7 @@ export class GaussianViewer {
     }
     camera.updateMatrixWorld?.(true)
 
-    // Ensure internal splat sort + culling uses the updated camera pose.
+    // Force sort/cull for this pose
     const originalGather = typeof viewerAny?.gatherSceneNodesForSort === 'function'
       ? viewerAny.gatherSceneNodesForSort
       : null
@@ -464,7 +448,6 @@ export class GaussianViewer {
       }
     }
 
-    // --- Render to off-screen target ---
     const prevTarget = renderer.getRenderTarget()
     renderer.setRenderTarget(this.exportTarget)
 
@@ -475,7 +458,6 @@ export class GaussianViewer {
       this.viewer.render()
     }
 
-    // --- Read pixels from GPU ---
     renderer.readRenderTargetPixels(
       this.exportTarget,
       0,
@@ -485,7 +467,6 @@ export class GaussianViewer {
       this.exportPixelBuf!,
     )
 
-    // --- Restore renderer & camera ---
     renderer.setRenderTarget(prevTarget)
     renderer.setPixelRatio(prevPixelRatio)
     renderer.setSize(prevSize.x, prevSize.y, false)
@@ -507,8 +488,7 @@ export class GaussianViewer {
       viewerAny.start()
     }
 
-    // --- Convert pixels → PNG Blob ---
-    // WebGL returns pixels bottom-to-top; flip vertically for correct orientation.
+    // WebGL rows are bottom-up; flip for PNG
     const rowSize = width * 4
     const src = this.exportPixelBuf!
     const flipped = new Uint8ClampedArray(width * height * 4)
@@ -524,7 +504,6 @@ export class GaussianViewer {
     return this.exportCanvas!.convertToBlob({ type: 'image/png' })
   }
 
-  /** Free GPU + CPU resources used by off-screen export rendering. */
   disposeExportResources() {
     this.exportTarget?.dispose()
     this.exportTarget = null

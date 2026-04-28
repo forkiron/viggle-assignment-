@@ -1,4 +1,4 @@
-/** Camera pose for keyframes and path playback (position, quaternion, fov). */
+/** Keyframe pose (tuple arrays + FOV). */
 export type CameraPose = {
   position: [number, number, number]
   quaternion: [number, number, number, number]

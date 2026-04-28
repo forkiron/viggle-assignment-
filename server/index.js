@@ -1,7 +1,5 @@
-/**
- * Export server: receives path + render settings, accepts frame uploads (PNG),
- * runs FFmpeg to produce output.mp4. Serves static exports at /exports/<id>/output.mp4.
- */
+// Receives export settings + PNG frames, runs FFmpeg → output.mp4. Serves /exports/<id>/output.mp4.
+// Flow: POST /export/start → POST .../frame (×N) → POST .../finish | cancel. GET .../status to poll.
 import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
@@ -31,7 +29,7 @@ app.use(express.json({ limit: '2mb' }))
 
 const upload = multer({ storage: multer.memoryStorage() })
 
-/** Active exports: id -> { status, framesDir, dir, totalFrames, receivedFrames, ffmpegProcess }. */
+/** id → job (lost on restart) */
 const exportsMap = new Map()
 
 const ensureExportDir = (id) => {
@@ -41,6 +39,7 @@ const ensureExportDir = (id) => {
   return { dir, framesDir }
 }
 
+// New job: uuid, write path.json, track expected frame count for progress UI.
 app.post('/export/start', (req, res) => {
   const id = crypto.randomUUID()
   const settings = req.body || {}
@@ -59,7 +58,7 @@ app.post('/export/start', (req, res) => {
   res.json({ id })
 })
 
-/** Upload a single rendered frame (PNG). */
+// One PNG per request; multipart `frame`, body `index` → frame_000000.png (FFmpeg numbering).
 app.post('/export/:id/frame', upload.single('frame'), (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)
@@ -74,7 +73,7 @@ app.post('/export/:id/frame', upload.single('frame'), (req, res) => {
   res.json({ ok: true })
 })
 
-/** Start FFmpeg encoding: frames -> output.mp4 (30 fps, libx264, yuv420p). */
+// Background FFmpeg: numbered PNGs → H.264. Response returns immediately; status flips on process exit.
 app.post('/export/:id/finish', (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)
@@ -116,7 +115,7 @@ app.post('/export/:id/finish', (req, res) => {
   res.json({ ok: true, output: `/exports/${id}/output.mp4` })
 })
 
-/** Cancel export and remove export directory. */
+// Kill encoding, wipe folder (partial MP4 discarded).
 app.post('/export/:id/cancel', (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)
@@ -136,6 +135,7 @@ app.post('/export/:id/cancel', (req, res) => {
   res.json({ ok: true })
 })
 
+// Encoding state + received vs total frames.
 app.get('/export/:id/status', (req, res) => {
   const { id } = req.params
   const entry = exportsMap.get(id)

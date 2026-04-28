@@ -1,4 +1,4 @@
-/** Play / Pause / Stop, loop toggle, seek slider, time display. */
+/** Preview transport + seek. */
 
 interface PlaybackControlsProps {
   isPlaying: boolean

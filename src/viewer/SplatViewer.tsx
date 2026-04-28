@@ -1,6 +1,4 @@
-/**
- * Mounts the GaussianViewer into a full-size container and disposes on unmount.
- */
+/** Mounts GaussianViewer; disposes on unmount. */
 import { useEffect, useRef } from 'react'
 import type { GaussianViewer } from './gaussianViewer'
 import { setViewerError, setViewerStatus } from '../state/viewerStore'

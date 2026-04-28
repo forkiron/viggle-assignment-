@@ -1,14 +1,10 @@
-/**
- * App shell: mounts viewer, HUD, controls, keyframe panel, export panel.
- * Wires viewer store, path store, PathPlayer, and export server.
- */
+/** Wires main viewer, keyframes, preview, and MP4 export pipeline. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SplatViewer } from './viewer/SplatViewer'
 import { ViewerHUD } from './ui/ViewerHUD'
 import { ViewerControls } from './ui/ViewerControls'
 import { GaussianViewer } from './viewer/gaussianViewer'
 import { KeyframePanel } from './ui/KeyframePanel'
-import { ExportPanel } from './ui/ExportPanel'
 import { PathPlayer } from './path/player/PathPlayer'
 import {
   resetViewerError,
@@ -66,7 +62,7 @@ function App() {
   const exportContainerRef = useRef<HTMLDivElement>(null)
   const [exportViewerReady, setExportViewerReady] = useState(false)
 
-  // --- Sync path duration; FPS; control mode / speed / sensitivity / frustum ---
+  // Path length, FPS meter, control settings → viewer
   useEffect(() => {
     playerRef.setKeyframes(keyframes)
     setDuration(playerRef.getDuration())
@@ -111,7 +107,6 @@ function App() {
     }
   }, [exportViewer])
 
-  // --- Scene load ---
   const handleLoad = async (nextUrl: string) => {
     const normalizedUrl = normalizeSceneUrl(nextUrl)
 
@@ -141,7 +136,6 @@ function App() {
     }
   }
 
-  // --- Keyframes ---
   const handleAddKeyframe = () => {
     const pose = viewer.getCameraPose()
     if (!pose) {
@@ -187,7 +181,7 @@ function App() {
     setPaused(false)
   }
 
-  // --- Export MP4 (off-screen rendering — viewer stays fully interactive) ---
+  // Second WebGL viewer (hidden) renders export frames; main viewer stays interactive.
   const runExport = async (settings: ExportSettings) => {
     const pipeline = new ExportPipeline(EXPORT_SERVER_URL)
     pipelineRef.current = pipeline
@@ -196,7 +190,6 @@ function App() {
     setExportProgress(0)
     setExportOutputUrl(undefined)
     setExportStatus('Starting export…')
-    // NOTE: controls are NOT disabled — user keeps full interactivity
 
     try {
       if (!exportViewerReady) {
@@ -206,7 +199,7 @@ function App() {
         throw new Error('Scene URL missing for export')
       }
       setExportStatus('Preparing export renderer…')
-      await exportViewer.loadScene(settings.sceneUrl, undefined, { progressiveLoad: false })
+      await exportViewer.loadScene(settings.sceneUrl)
       await exportViewer.waitForRenderReady({ timeoutMs: 5000, warmupFrames: 16 })
 
       const outputUrl = await pipeline.run(exportViewer, settings, (frame, total, status) => {
@@ -292,7 +285,6 @@ function App() {
     return () => cancelAnimationFrame(raf)
   }, [isPreviewing, playerRef])
 
-  // --- Render ---
   return (
     <div className="app-shell">
       <SplatViewer viewer={viewer} />

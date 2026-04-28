@@ -1,4 +1,4 @@
-/** Keyboard state and pointer-lock mouse delta for fly controls. */
+/** Keys + mouse deltas for fly mode. */
 type KeyState = Record<string, boolean>
 
 export class InputManager {

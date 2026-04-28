@@ -1,4 +1,4 @@
-/** Export panel: Export MP4 button, progress bar, cancel, output link. */
+/** MP4 export controls + progress + link when done. */
 interface ExportPanelProps {
   isExporting: boolean
   progress: number

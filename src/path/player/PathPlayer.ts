@@ -1,7 +1,4 @@
-/**
- * Drives preview playback: advances time, samples pose via sampler, applies to viewer.
- * Supports play/pause/stop, seek, and loop.
- */
+/** rAF loop: samplePoseAtTime → viewer; play/pause/seek/loop. */
 import type { Keyframe } from '../types'
 import { samplePoseAtTime } from './sampler'
 import type { GaussianViewer } from '../../viewer/gaussianViewer'

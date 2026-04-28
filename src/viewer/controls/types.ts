@@ -1,4 +1,4 @@
-/** Camera pose used by GaussianViewer (position, quaternion, fov). */
+/** Tuple pose for GaussianViewer ↔ splat cam. */
 export type CameraPose = {
   position: [number, number, number]
   quaternion: [number, number, number, number]
